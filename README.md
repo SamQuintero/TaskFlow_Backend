@@ -136,10 +136,4 @@ GET /calendar/events?token=12345
 - Swagger (swagger-jsdoc + swagger-ui-express)  
 - dotenv para variables de entorno  
 
-## Notas para la entrega  
-- Documentación API: disponible en /swagger  
-- Repositorio: adjunta la URL en la plataforma del curso. Si es privado, invita a fsevilla@gmail.com  
-- Este backend es una versión dummy (controladores con respuestas simuladas) para cumplir la fase de diseño y documentación.  
 
-## Créditos  
-Proyecto académico “TaskFlow” – Backend API Dummy.
