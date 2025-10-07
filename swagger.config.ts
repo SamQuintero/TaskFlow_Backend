@@ -1,8 +1,9 @@
 
 import { SwaggerOptions }  from "swagger-ui-express"
 
-const port = process.env.PORT
-const options : SwaggerOptions = {
+const port = process.env.PORT || 3001;
+
+const SwaggerOptions : SwaggerOptions = {
     swaggerDefinition: {
         openapi: "3.1.0",
         info: {
@@ -13,7 +14,7 @@ const options : SwaggerOptions = {
         },
         servers: [
             {
-                url: "https:localhost:" + port +"/" 
+                url: 'https:localhost:' + port +"/" 
             }
         ]
        },
@@ -23,4 +24,4 @@ const options : SwaggerOptions = {
     ]
 }
 
-export default options;
+export default SwaggerOptions;
