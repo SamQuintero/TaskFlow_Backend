@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getTasks, createTask, updateTask, deleteTask } from "../controllers/task";
+import { getTasks, getTask, createTask, updateTask, deleteTask } from "../controllers/task";
 import { authMiddelware } from "../middelwares/auth";
 
 
@@ -30,6 +30,28 @@ router.use(authMiddelware)
  *                 message: { type: string }
  */
 router.get("/", getTasks);
+/**
+ * @openapi
+ * /tasks/{id}:
+ *   get:
+ *     tags: [Tasks]
+ *     summary: Obtener tarea por ID (dummy)
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         description: Token dummy (?token=12345)
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ */
+router.get("/:id", getTask);
 /**
  * @openapi
  * /tasks:
