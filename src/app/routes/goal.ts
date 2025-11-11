@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getGoals, createGoal, updateGoal, deleteGoal } from "../controllers/goal";
+import { getGoals, getGoal, createGoal, updateGoal, deleteGoal } from "../controllers/goal";
 import { authMiddelware } from "../middelwares/auth";
 const router = Router();
 
@@ -22,6 +22,28 @@ router.use(authMiddelware)
  *         description: OK
  */
 router.get("/", getGoals);
+/**
+ * @openapi
+ * /goals/{id}:
+ *   get:
+ *     tags: [Goals]
+ *     summary: Obtener meta por ID (dummy)
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         description: Token dummy (?token=12345)
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ */
+router.get("/:id", getGoal);
 /**
  * @openapi
  * /goals:
