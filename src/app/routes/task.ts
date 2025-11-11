@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { getTasks, getTask, createTask, updateTask, deleteTask } from "../controllers/task";
-import { authMiddelware } from "../middelwares/auth";
+import { authMiddleware , authorizeRoles} from "../middelwares/auth";
 
 
 const router = Router();
 
-router.use(authMiddelware)
+router.use(authMiddleware)
 /**
  * @openapi
  * /tasks:
@@ -148,6 +148,6 @@ router.put("/:id", updateTask);
  *               properties:
  *                 message: { type: string }
  */
-router.delete("/:id", deleteTask);
+router.delete("/:id", authorizeRoles('admin'), deleteTask);
 
 export default router;

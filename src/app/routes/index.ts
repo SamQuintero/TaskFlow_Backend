@@ -9,7 +9,7 @@ import calendarRoutes from "./calendar";
 const router = Router();
 
 router.use("/auth", authRoutes);
-router.use("/user", userRoutes);
+router.use("/users", userRoutes);
 router.use("/tasks", taskRoutes);
 router.use("/goals", goalRoutes);
 router.use("/calendar", calendarRoutes);

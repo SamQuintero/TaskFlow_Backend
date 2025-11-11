@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { login, signup} from "../controllers/auth";
-import { authMiddelware } from "../middelwares/auth";
+import { authMiddleware } from "../middelwares/auth";
 
 const router = Router();
 
-router.use(authMiddelware)
 
 /**
  * @openapi

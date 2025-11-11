@@ -1,47 +1,78 @@
 import { Request, Response } from "express";
+import Task from "../models/task";
 import { ITaskCreate, ITaskUpdate } from "../interfaces/task";
-import {
-  listTasks,
-  getTaskById,
-  createTaskModel,
-  updateTaskModel,
-  deleteTaskModel,
-} from "../models/task";
 
-export const getTasks = (req: Request, res: Response) => {
-  res.json({ data: listTasks() });
-};
 
-export const getTask = (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid id" });
-  const task = getTaskById(id);
-  if (!task) return res.status(404).json({ message: "Task not found" });
-  res.json({ data: task });
-};
-
-export const createTask = (req: Request, res: Response) => {
-  const body = req.body as ITaskCreate;
-  if (!body || !body.title || !body.priority) {
-    return res.status(400).json({ message: "title and priority are required" });
+export const getTasks = async (req: Request, res: Response) => {
+  try {
+    const tasks = await Task.find();
+    res.json({ data: tasks });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching tasks", error });
   }
-  const task = createTaskModel(body);
-  res.status(201).json({ data: task });
 };
 
-export const updateTask = (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid id" });
-  const changes = req.body as ITaskUpdate;
-  const updated = updateTaskModel(id, changes);
-  if (!updated) return res.status(404).json({ message: "Task not found" });
-  res.json({ data: updated });
+
+export const getTask = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const task = await Task.findById(id);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    res.json({ data: task });
+  } catch (error) {
+    res.status(400).json({ message: "Invalid task ID", error });
+  }
 };
 
-export const deleteTask = (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid id" });
-  const ok = deleteTaskModel(id);
-  if (!ok) return res.status(404).json({ message: "Task not found" });
-  res.json({ message: `Tarea ${id} eliminada` });
+
+export const createTask = async (req: Request, res: Response) => {
+  try {
+    const body = req.body as ITaskCreate;
+    if (!body || !body.title) {
+      return res.status(400).json({ message: "title is required" });
+    }
+
+    const newTask = new Task({
+      title: body.title,
+      priority: body.priority,
+      estimateHours: body.estimateHours,
+      dueDate: body.dueDate,
+      completed: body.completed ?? false,
+    });
+
+    const savedTask = await newTask.save();
+    res.status(201).json({ data: savedTask });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating task", error });
+  }
+};
+
+
+export const updateTask = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const changes = req.body as ITaskUpdate;
+
+    const updatedTask = await Task.findByIdAndUpdate(id, changes, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedTask) return res.status(404).json({ message: "Task not found" });
+    res.json({ data: updatedTask });
+  } catch (error) {
+    res.status(400).json({ message: "Invalid task ID", error });
+  }
+};
+
+
+export const deleteTask = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const deletedTask = await Task.findByIdAndDelete(id);
+    if (!deletedTask) return res.status(404).json({ message: "Task not found" });
+    res.json({ message: `Task ${id} deleted` });
+  } catch (error) {
+    res.status(400).json({ message: "Invalid task ID", error });
+  }
 };

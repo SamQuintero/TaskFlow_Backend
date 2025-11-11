@@ -1,49 +1,71 @@
 import { Request, Response } from "express";
-import {
-  listUsers,
-  getUserById,
-  createUserModel,
-  updateUserModel,
-  deleteUserModel,
-} from "../models/users";
-import { IUser } from "../interfaces/user";
+import bcrypt from "bcryptjs";
+import {UserModel} from "../models/users";
 
-export function getUsers(req: Request, res: Response) {
-  // usuario autenticado inyectado por authMiddelware (token=12345)
-  // console.log("User:", req.user);
-  res.json({ data: listUsers() });
-}
 
-export function getUser(req: Request, res: Response) {
-  const id = Number(req.params.id);
-  if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid id" });
-  const user = getUserById(id);
-  if (!user) return res.status(404).json({ message: "User not found" });
-  res.json({ data: user });
-}
 
-export function createUser(req: Request, res: Response) {
-  const body = req.body as Omit<IUser, "id">;
-  if (!body || !body.name || !body.email) {
-    return res.status(400).json({ message: "name and email are required" });
+export async function getUsers(req: Request, res: Response) {
+  try {
+    const users = await UserModel.find();
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener usuarios", error });
   }
-  const user = createUserModel(body);
-  res.status(201).json({ data: user });
 }
 
-export function updateUser(req: Request, res: Response) {
-  const id = Number(req.params.id);
-  if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid id" });
-  const changes = req.body as Partial<Omit<IUser, "id">>;
-  const updated = updateUserModel(id, changes);
-  if (!updated) return res.status(404).json({ message: "User not found" });
-  res.json({ data: updated });
+
+export async function getUser(req: Request, res: Response) {
+  try {
+    const user = await UserModel.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener usuario", error });
+  }
 }
 
-export function deleteUser(req: Request, res: Response) {
-  const id = Number(req.params.id);
-  if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid id" });
-  const ok = deleteUserModel(id);
-  if (!ok) return res.status(404).json({ message: "User not found" });
-  res.json({ message: `Usuario ${id} eliminado` });
+
+export async function createUser(req: Request, res: Response) {
+  try {
+    console.log(req.body)
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password)
+      return res.status(400).json({ message: "Faltan campos requeridos" });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await UserModel.create({ name, email, password:hashedPassword });
+    console.log("Usuario creado:", newUser);
+    res.status(201).json(newUser);
+  } catch (error) {
+    res.status(500).json({ message: "Error al crear usuario", error });
+  }
+}
+
+export async function updateUser(req: Request, res: Response) {
+  try {
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true } // retorna el documento actualizado
+    );
+
+    if (!updatedUser)
+      return res.status(404).json({ message: "Usuario no encontrado" });
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: "Error al actualizar usuario", error });
+  }
+}
+
+
+export async function deleteUser(req: Request, res: Response) {
+  try {
+    const deletedUser = await UserModel.findByIdAndDelete(req.params.id);
+    if (!deletedUser)
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    res.status(200).json({ message: "Usuario eliminado correctamente" });
+  } catch (error) {
+    res.status(500).json({ message: "Error al eliminar usuario", error });
+  }
 }

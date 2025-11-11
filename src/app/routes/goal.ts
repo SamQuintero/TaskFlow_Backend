@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { getGoals, getGoal, createGoal, updateGoal, deleteGoal } from "../controllers/goal";
-import { authMiddelware } from "../middelwares/auth";
+import { authMiddleware, authorizeRoles} from "../middelwares/auth";
 const router = Router();
 
-router.use(authMiddelware)
+router.use(authMiddleware)
 /**
  * @openapi
  * /goals:
@@ -111,6 +111,6 @@ router.put("/:id", updateGoal);
  *       200:
  *         description: Eliminada
  */
-router.delete("/:id", deleteGoal);
+router.delete("/:id",authorizeRoles('admin'), deleteGoal);
 
 export default router;

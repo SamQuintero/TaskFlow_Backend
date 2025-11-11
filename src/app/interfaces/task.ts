@@ -1,6 +1,8 @@
+import { Document } from "mongoose";
+
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
-export interface ITask {
+export interface ITask extends Document{
   id: number;
   title: string;
   priority: Priority;
@@ -11,7 +13,7 @@ export interface ITask {
   updatedAt: string; // ISO 8601 string
 }
 
-export interface ITaskCreate {
+export interface ITaskCreate extends Document{
   title: string;
   priority: Priority;
   estimateHours?: number;

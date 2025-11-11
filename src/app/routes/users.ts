@@ -1,13 +1,10 @@
 import { Router, json } from "express";
 import { getUsers, getUser, createUser, updateUser, deleteUser } from "../controllers/users";
-import { authMiddelware } from "../middelwares/auth";
+import { authMiddleware, authorizeRoles} from "../middelwares/auth";
 
 const router = Router();
 
-
-router.use(json());
-
-router.use(authMiddelware)
+router.use(authMiddleware)
 /**
  * @openapi
  * /user:
@@ -79,7 +76,7 @@ router.get("/:id", getUser);
  *       201:
  *         description: Creado
  */
-router.post("", createUser);
+router.post("", authorizeRoles('admin'), createUser);
 /**
  * @openapi
  * /user/{id}:
@@ -129,6 +126,6 @@ router.put("/:id", updateUser);
  *       200:
  *         description: Eliminado
  */
-router.delete("/:id", deleteUser);
+router.delete("/:id",authorizeRoles('admin'), deleteUser);
 
 export default router;
