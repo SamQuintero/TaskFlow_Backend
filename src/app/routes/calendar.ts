@@ -15,7 +15,7 @@ router.use(authMiddleware)
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *     responses:
