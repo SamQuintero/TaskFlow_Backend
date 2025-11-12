@@ -1,4 +1,5 @@
 import { Request, Response , NextFunction } from "express";
+import jwt from "jsonwebtoken";
 import { IUser } from "../interfaces/user";
 
 declare global {
@@ -9,15 +10,40 @@ declare global {
     }
 }
 
-export function authMiddelware(req: Request, res: Response, next: NextFunction) {
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
 
-    const token = req.query.token;
-    if (token == '12345'){
-        req.user = {name: 'sam', id:123, email :'sam@correo.com'}
-        next();
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Authorization header missing or invalid" });
+  }
+  
+  const token = authHeader.split(" ")[1];
+ 
+  try {
+    console.log("Token recibido:", token)
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    console.log(decoded);
+    (req as any).user = decoded; 
+    next();
+  } catch (err) {
+    console.error("Error al verificar token:", err);
+    res.status(401).json({ message: "Invalid or expired token" });
+  }
+};
+
+export const authorizeRoles = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as any;
+    console.log(user);
+
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
-    else {
-        res.status(401).send({message: "unauthorized"});
-        //res.sendStatus(401);
+
+    if (!roles.includes(user.role)) {
+      return res.status(403).json({ message: "Forbidden: insufficient permissions" });
     }
-}
+
+    next();
+  };
+};

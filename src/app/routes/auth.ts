@@ -1,22 +1,21 @@
 import { Router } from "express";
 import { login, signup} from "../controllers/auth";
-import { authMiddelware } from "../middelwares/auth";
+import { authMiddleware } from "../middelwares/auth";
 
 const router = Router();
 
-router.use(authMiddelware)
 
 /**
  * @openapi
  * /auth/login:
  *   post:
  *     tags: [Auth]
- *     summary: Login (dummy)
+ *     summary: Login
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *     requestBody:
@@ -44,12 +43,12 @@ router.post('/login', login);
  * /auth/signup:
  *   post:
  *     tags: [Auth]
- *     summary: Registro (dummy)
+ *     summary: Registro 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *     requestBody:
@@ -62,6 +61,7 @@ router.post('/login', login);
  *               name: { type: string }
  *               email: { type: string, format: email }
  *               password: { type: string }
+ *               role: { type: string }
  *     responses:
  *       200:
  *         description: OK (sin cuerpo)

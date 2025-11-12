@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { syncCalendar, getEvents } from "../controllers/calendar";
-import { authMiddelware } from "../middelwares/auth";
+import { authMiddleware } from "../middelwares/auth";
 
 const router = Router();
 
-router.use(authMiddelware)
+router.use(authMiddleware)
 /**
  * @openapi
  * /calendar/sync:
@@ -15,7 +15,7 @@ router.use(authMiddelware)
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *     responses:

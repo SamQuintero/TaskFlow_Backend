@@ -1,24 +1,21 @@
 import { Router, json } from "express";
 import { getUsers, getUser, createUser, updateUser, deleteUser } from "../controllers/users";
-import { authMiddelware } from "../middelwares/auth";
+import { authMiddleware, authorizeRoles} from "../middelwares/auth";
 
 const router = Router();
 
-
-router.use(json());
-
-router.use(authMiddelware)
+router.use(authMiddleware)
 /**
  * @openapi
  * /user:
  *   get:
  *     tags: [Users]
- *     summary: Listar usuarios (dummy)
+ *     summary: Listar usuarios 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *     responses:
@@ -39,12 +36,12 @@ router.get("", getUsers);
  * /user/{id}:
  *   get:
  *     tags: [Users]
- *     summary: Obtener usuario por ID (dummy)
+ *     summary: Obtener usuario por ID 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token
  *         schema:
  *           type: string
  *       - in: path
@@ -61,12 +58,12 @@ router.get("/:id", getUser);
  * /user:
  *   post:
  *     tags: [Users]
- *     summary: Crear usuario (dummy)
+ *     summary: Crear usuario 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *     requestBody:
@@ -79,18 +76,18 @@ router.get("/:id", getUser);
  *       201:
  *         description: Creado
  */
-router.post("", createUser);
+router.post("", authorizeRoles('admin'), createUser);
 /**
  * @openapi
  * /user/{id}:
  *   put:
  *     tags: [Users]
- *     summary: Actualizar usuario (dummy)
+ *     summary: Actualizar usuario
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *       - in: path
@@ -113,12 +110,12 @@ router.put("/:id", updateUser);
  * /user/{id}:
  *   delete:
  *     tags: [Users]
- *     summary: Eliminar usuario (dummy)
+ *     summary: Eliminar usuario 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *       - in: path
@@ -129,6 +126,6 @@ router.put("/:id", updateUser);
  *       200:
  *         description: Eliminado
  */
-router.delete("/:id", deleteUser);
+router.delete("/:id",authorizeRoles('admin'), deleteUser);
 
 export default router;

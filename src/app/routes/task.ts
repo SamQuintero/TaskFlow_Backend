@@ -1,22 +1,22 @@
 import { Router } from "express";
 import { getTasks, getTask, createTask, updateTask, deleteTask } from "../controllers/task";
-import { authMiddelware } from "../middelwares/auth";
+import { authMiddleware , authorizeRoles} from "../middelwares/auth";
 
 
 const router = Router();
 
-router.use(authMiddelware)
+router.use(authMiddleware)
 /**
  * @openapi
  * /tasks:
  *   get:
  *     tags: [Tasks]
- *     summary: Listar tareas (dummy)
+ *     summary: Listar tareas 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *     responses:
@@ -35,12 +35,12 @@ router.get("/", getTasks);
  * /tasks/{id}:
  *   get:
  *     tags: [Tasks]
- *     summary: Obtener tarea por ID (dummy)
+ *     summary: Obtener tarea por ID 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *       - in: path
@@ -57,12 +57,12 @@ router.get("/:id", getTask);
  * /tasks:
  *   post:
  *     tags: [Tasks]
- *     summary: Crear tarea (dummy)
+ *     summary: Crear tarea 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *     requestBody:
@@ -92,12 +92,12 @@ router.post("/", createTask);
  * /tasks/{id}:
  *   put:
  *     tags: [Tasks]
- *     summary: Actualizar tarea (dummy)
+ *     summary: Actualizar tarea 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *       - in: path
@@ -126,12 +126,12 @@ router.put("/:id", updateTask);
  * /tasks/{id}:
  *   delete:
  *     tags: [Tasks]
- *     summary: Eliminar tarea (dummy)
+ *     summary: Eliminar tarea 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *       - in: path
@@ -148,6 +148,6 @@ router.put("/:id", updateTask);
  *               properties:
  *                 message: { type: string }
  */
-router.delete("/:id", deleteTask);
+router.delete("/:id", authorizeRoles('admin'), deleteTask);
 
 export default router;

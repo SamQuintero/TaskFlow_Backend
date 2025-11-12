@@ -1,20 +1,20 @@
 import { Router } from "express";
 import { getGoals, getGoal, createGoal, updateGoal, deleteGoal } from "../controllers/goal";
-import { authMiddelware } from "../middelwares/auth";
+import { authMiddleware, authorizeRoles} from "../middelwares/auth";
 const router = Router();
 
-router.use(authMiddelware)
+router.use(authMiddleware)
 /**
  * @openapi
  * /goals:
  *   get:
  *     tags: [Goals]
- *     summary: Listar metas (dummy)
+ *     summary: Listar metas 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *     responses:
@@ -27,12 +27,12 @@ router.get("/", getGoals);
  * /goals/{id}:
  *   get:
  *     tags: [Goals]
- *     summary: Obtener meta por ID (dummy)
+ *     summary: Obtener meta por ID 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *       - in: path
@@ -49,12 +49,12 @@ router.get("/:id", getGoal);
  * /goals:
  *   post:
  *     tags: [Goals]
- *     summary: Crear meta (dummy)
+ *     summary: Crear meta 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *     requestBody:
@@ -73,12 +73,12 @@ router.post("/", createGoal);
  * /goals/{id}:
  *   put:
  *     tags: [Goals]
- *     summary: Actualizar meta (dummy)
+ *     summary: Actualizar meta 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *       - in: path
@@ -95,12 +95,12 @@ router.put("/:id", updateGoal);
  * /goals/{id}:
  *   delete:
  *     tags: [Goals]
- *     summary: Eliminar meta (dummy)
+ *     summary: Eliminar meta 
  *     parameters:
  *       - in: query
  *         name: token
  *         required: true
- *         description: Token dummy (?token=12345)
+ *         description: Token 
  *         schema:
  *           type: string
  *       - in: path
@@ -111,6 +111,6 @@ router.put("/:id", updateGoal);
  *       200:
  *         description: Eliminada
  */
-router.delete("/:id", deleteGoal);
+router.delete("/:id",authorizeRoles('admin'), deleteGoal);
 
 export default router;

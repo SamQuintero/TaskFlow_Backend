@@ -1,4 +1,6 @@
-export interface IGoal {
+import { Document } from "mongoose";
+
+export interface IGoal extends Document {
   id: number;
   title: string;
   description?: string;
@@ -8,7 +10,7 @@ export interface IGoal {
   updatedAt: string; // ISO 8601
 }
 
-export interface IGoalCreate {
+export interface IGoalCreate  {
   title: string;
   description?: string;
   dueDate?: string;

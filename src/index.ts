@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import dotenv from "dotenv"
+import { connectDB } from "./database";
 dotenv.config()
 import swaggerJsDoc from "swagger-jsdoc"
 import { setup, serve} from "swagger-ui-express"
@@ -10,9 +11,10 @@ import routes from "./app/routes";
 
 
 const port = process.env.PORT || 3001; 
-
+const dbUrl = process.env.MONGO_URL;
 const app = express();
 app.use(express.json());
+
 
 app.use(routes);
 
@@ -24,6 +26,13 @@ app.get('', (req: Request, res: Response) =>{
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/swagger', serve, setup(swaggerDocs));
 
-app.listen(port, () => {
-    console.log(`api running on port ${port}`);
-})
+connectDB().then(res => {
+    console.log('Ya se conecto!');
+    app.listen(port, () => {
+        console.log(`App is running in port ${port}`);
+    })
+}).catch(err => {
+    console.log('Ocurrio un error');
+});
+
+
