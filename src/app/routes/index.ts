@@ -4,6 +4,7 @@ import userRoutes from "./users";
 import taskRoutes from "./task";
 import goalRoutes from "./goal";
 import calendarRoutes from "./calendar";
+import fileRoutes from "./files";
 
 
 const router = Router();
@@ -13,6 +14,7 @@ router.use("/users", userRoutes);
 router.use("/tasks", taskRoutes);
 router.use("/goals", goalRoutes);
 router.use("/calendar", calendarRoutes);
+router.use("/files", fileRoutes);
 
 
 export default router;
