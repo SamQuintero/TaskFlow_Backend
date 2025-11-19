@@ -5,6 +5,11 @@ import { uploadFile, getFile } from "../controllers/file";
 
 const router = Router();
 
+router.get("/view", (req, res) => {
+    res.render("upload"); // Buscará un archivo 'upload.hbs'
+  });
+
+
 router.use(authMiddleware)
 
 
