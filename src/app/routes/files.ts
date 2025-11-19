@@ -14,7 +14,9 @@ router.use(authMiddleware)
  *   post:
  *     tags: [Files]
  *     summary: Sube un archivo a S3
- *     description: Sube un archivo (max 5MB, tipos: jpg, png, pdf). Requiere Bearer Token.
+ *     description: >
+ *       Sube un archivo (max 5MB, tipos: jpg, png, pdf). 
+ *       Requiere Bearer Token.
  *     security:
  *       - bearerAuth: []
  *     requestBody:

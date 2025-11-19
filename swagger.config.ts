@@ -10,14 +10,27 @@ const SwaggerOptions : SwaggerOptions = {
             title: "API Dummy",
             version: "0.0.1",
             description: "API just to learn",
-
         },
         servers: [
             {
-                url: 'https:localhost:' + port +"/" 
+                url: 'http://localhost:' + port + "/"
             }
-        ]
-       },
+        ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT",
+                },
+            },
+        },
+        security: [
+            {
+                bearerAuth: [],
+            },
+        ],
+    },
 
     apis :[
         './src/**/*.ts'
