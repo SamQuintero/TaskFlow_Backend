@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Archivos a S3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+        <h1 class="text-2xl font-bold mb-4 text-center text-blue-600">TaskFlow S3 Upload</h1>
+        
+        <form id="uploadForm" class="space-y-4">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Tu Token (Bearer)</label>
+                <input type="text" id="tokenInput" placeholder="Pega tu token aquí..." 
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md text-sm" required>
+                <p class="text-xs text-gray-500 mt-1">Obtenlo haciendo Login en Swagger/Postman</p>
+            </div>
+
+            <div class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center cursor-pointer hover:bg-blue-50 transition" id="dropZone">
+                <p class="text-gray-500">Arrastra tu archivo aquí</p>
+                <p class="text-xs text-gray-400">- o -</p>
+                <input type="file" id="fileInput" class="hidden">
+                <button type="button" id="selectBtn" class="mt-2 text-blue-500 text-sm font-semibold">Seleccionar Archivo</button>
+                <p id="fileName" class="mt-2 text-sm font-bold text-gray-700"></p>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition">
+                Subir a la Nube 🚀
+            </button>
+        </form>
+
+        <div id="message" class="mt-4 text-center text-sm font-medium hidden"></div>
+    </div>
+
+    <script>
+        // Lógica del Frontend
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectBtn = document.getElementById('selectBtn');
+        const fileNameDisplay = document.getElementById('fileName');
+        const form = document.getElementById('uploadForm');
+        const messageDiv = document.getElementById('message');
+
+        // Click en el botón selecciona el input oculto
+        selectBtn.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Mostrar nombre del archivo seleccionado
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.textContent = fileInput.files[0].name;
+            }
+        });
+
+        // Manejo del Envío
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = document.getElementById('tokenInput').value;
+            const file = fileInput.files[0];
+
+            if (!file) return alert("¡Selecciona un archivo!");
+            if (!token) return alert("¡Necesitas un token!");
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            messageDiv.classList.remove('hidden');
+            messageDiv.textContent = "Subiendo...";
+            messageDiv.className = "mt-4 text-center text-sm font-medium text-blue-500";
+
+            try {
+                const response = await fetch('/files/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Aquí enviamos el token correctamente
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    messageDiv.textContent = "✅ ¡Subida Exitosa!";
+                    messageDiv.className = "mt-4 text-center text-sm font-medium text-green-600";
+                    console.log(result);
+                } else {
+                    throw new Error(result.message || "Error desconocido");
+                }
+            } catch (error) {
+                messageDiv.textContent = "❌ Error: " + error.message;
+                messageDiv.className = "mt-4 text-center text-sm font-medium text-red-600";
+            }
+        });
+    </script>
+</body>
+</html>

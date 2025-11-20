@@ -1,139 +1,206 @@
-# TaskFlow Backend (API Dummy)
+# TaskFlow Backend (API)
 
-## Descripción  
-API dummy en TypeScript/Express para el proyecto integrador “TaskFlow”. Proporciona endpoints CRUD mínimos para usuarios, tareas, metas y calendario, con respuestas de prueba (dummy). La documentación interactiva está disponible con Swagger.  
+## Descripción
+API en TypeScript/Express para el proyecto “TaskFlow”. Incluye autenticación con JWT, CRUD de usuarios/tareas/metas, endpoints de calendario (dummy), subida y descarga de archivos a AWS S3, y documentación interactiva con Swagger.
 
-## Requisitos  
-- Node.js 18+ (recomendado)  
-- npm 9+ o yarn  
-- Variables de entorno (.env)  
+Importante: la mayoría de las rutas están protegidas con Authorization: Bearer <JWT>. Primero debes registrarte e iniciar sesión para obtener un token.
 
-## Instalación  
-1. Clonar el repositorio  
-   git clone <URL_DE_TU_REPO>  
-   cd TaskFlow_Backend  
+## Requisitos
+- Node.js 18+ (recomendado)
+- npm 9+
+- Conectividad a:
+  - MongoDB Atlas (MONGO_URL)
+  - AWS S3 (credenciales y bucket)
+- Archivo `.env` válido
 
-2. Crear archivo de entorno  
-   cp .env.example .env  
-   Edita .env si quieres cambiar el puerto.  
+## Variables de entorno
+Se requieren las siguientes variables. La app arranca el servidor únicamente si logra conectar a MongoDB; además, el módulo S3 valida sus variables en el arranque y lanza error si faltan.
 
-3. Instalar dependencias  
-   npm install  
+- PORT: Puerto de la API (por defecto 3000 si no se define)
+- MONGO_URL: URI de conexión a MongoDB Atlas
+- JWT_SECRET: Secreto para firmar/validar JWT
+- S3_ACCESS_KEY: Access Key de AWS
+- S3_SECRET_KEY: Secret Key de AWS
+- S3_REGION: Región (ej. us-east-2)
+- S3_BUCKET_NAME: Nombre del bucket
 
-## Ejecución  
-- Desarrollo (TS sin compilar)  
-  npm run dev  
-  Se levanta en el puerto definido en .env (por defecto 3001).  
+Ejemplo `.env` (no uses credenciales reales en el repo):
+```
+PORT=3000
+MONGO_URL="mongodb+srv://<user>:<pass>@<cluster>/<db>?retryWrites=true&w=majority"
+JWT_SECRET="mi_super_secreto"
+S3_ACCESS_KEY="AKIA..."
+S3_SECRET_KEY="..."
+S3_REGION="us-east-2"
+S3_BUCKET_NAME="taskflow-archivos-bucket"
+```
 
-- Producción (compilado a dist)  
-  npm run build  
-  npm start  
+## Instalación
+1) Clonar el repositorio
+```
+git clone <URL_DEL_REPO>
+cd TaskFlow_Backend
+```
 
-## Variables de entorno  
-- PORT: Puerto de escucha de la API (por defecto 3001)  
+2) Crear `.env` con las variables anteriores
 
-Ejemplo .env:  
-PORT=3001  
+3) Instalar dependencias
+```
+npm install
+```
 
-## Estructura del proyecto  
-dist/ (build compilado)  
-node_modules/  
-src/  
-  app/  
-    controllers/  
-      auth.ts  
-      calendar.ts  
-      goal.ts  
-      task.ts  
-      users.ts  
-    interfaces/  
-      user.ts  
-    middelwares/ (nota: nombre de carpeta actual)  
-      auth.ts  
-    models/  
-      auth.ts  
-      calendar.ts  
-      goal.ts  
-      index.ts  
-      task.ts  
-      users.ts  
-    routes/  
-      auth.ts  
-      calendar.ts  
-      goal.ts  
-      index.ts  
-      task.ts  
-      users.ts  
-  index.ts (punto de entrada de la app)  
-.gitignore  
-package.json  
-package-lock.json  
-swagger.config.ts  
-tsconfig.json  
+## Ejecución
+- Desarrollo (TypeScript sin compilar):
+```
+npm run dev
+```
+Si tu entorno no corre `.ts` directamente, usa:
+```
+npx ts-node src/index.ts
+```
 
-## Base URL y salud  
-- Base URL local: http://localhost:PORT  
-- Health (simple): GET / → "api works"  
-- Swagger UI: GET /swagger  
+- Producción (compilado a `dist`):
+```
+npm run build
+npm start
+```
 
-## Autenticación (dummy)  
-- Middleware: src/app/middelwares/auth.ts  
-- Autorización requerida en la mayoría de rutas (incluida /auth actualmente).  
-- Proveer token en query string: ?token=12345  
-  Ejemplo: GET /users?token=12345  
+Mensajes esperados al iniciar:
+- “Ya se conecto!” (Mongo conectado)
+- “App is running in port <PORT>”
 
-## Endpoints principales  
-Nota: Respuestas dummy (no hay persistencia). Todas las rutas requieren ?token=12345 (incluyendo /auth).  
+Base URL local por defecto: `http://localhost:3000`
 
-### Auth  
-POST /auth/login?token=12345  
-Body: { email, password } (cualquier payload)  
-Respuesta: { token: "jasfhj1234hk989778" }  
+- Health: `GET /` → "api works"
+- Swagger UI: `GET /swagger`
 
-POST /auth/signup?token=12345  
-Body: { name, email, password }  
-Respuesta: 200 OK sin cuerpo  
+## Autenticación y Autorización
+- Login/Signup generan y usan JWT (firmado con `JWT_SECRET`).
+- Rutas protegidas exigen header:
+  ```
+  Authorization: Bearer <tu_token>
+  ```
+- Control de roles:
+  - `authorizeRoles('admin')` requerido en:
+    - Users: crear (`POST /users`) y eliminar (`DELETE /users/:id`)
+    - Tasks: eliminar (`DELETE /tasks/:id`)
+    - Goals: eliminar (`DELETE /goals/:id`)
 
-### Users  
-GET /user?token=12345  
-Respuesta: { data: [] }  
+## Endpoints
 
-### Tasks  
-GET /tasks?token=12345  
-POST /tasks?token=12345  
-PUT /tasks/:id?token=12345  
-DELETE /tasks/:id?token=12345  
+### Auth (público)
+- `POST /auth/signup`
+  - Body JSON: `{ name, email, password, role? (user|admin) }`
+- `POST /auth/login`
+  - Body JSON: `{ email, password }`
+  - Respuesta: `{ token, ... }` (usa este token para el resto de endpoints)
 
-### Goals  
-GET /goals?token=12345  
-POST /goals?token=12345  
-PUT /goals/:id?token=12345  
-DELETE /goals/:id?token=12345  
+### Users (protegido)
+- `GET /users` — listar
+- `GET /users/:id` — obtener por id
+- `POST /users` — crear (admin)
+- `PUT /users/:id` — actualizar
+- `DELETE /users/:id` — eliminar (admin)
 
-### Calendar  
-POST /calendar/sync?token=12345  
-GET /calendar/events?token=12345  
+### Tasks (protegido)
+- `GET /tasks` — listar
+- `GET /tasks/:id` — obtener por id
+- `POST /tasks` — crear
+- `PUT /tasks/:id` — actualizar
+- `DELETE /tasks/:id` — eliminar (admin)
 
-## Ejemplos con curl  
-- Login (dummy)  
-  curl -X POST "http://localhost:3001/auth/login?token=12345" -H "Content-Type: application/json" -d '{"email":"test@example.com","password":"secret"}'  
+### Goals (protegido)
+- `GET /goals` — listar
+- `GET /goals/:id` — obtener por id
+- `POST /goals` — crear
+- `PUT /goals/:id` — actualizar
+- `DELETE /goals/:id` — eliminar (admin)
 
-- Listar tareas (dummy)  
-  curl "http://localhost:3001/tasks?token=12345"  
+### Calendar (protegido, dummy)
+- `POST /calendar/sync`
+- `GET /calendar/events`
 
-## Swagger  
-- UI: http://localhost:3001/swagger  
-- Generación: swagger-jsdoc usando swagger.config.ts  
-- Los endpoints son interactivos desde Swagger UI.  
+### Files (AWS S3) 
+- `GET /files/view` — vista HBS simple (pública) para probar upload
+- `POST /files/upload` (protegido)
+  - Form-data: key `file` (tipo `File`), soporta: jpg, jpeg, png, gif, pdf; máx 5MB
+  - Sube a S3 y guarda metadatos en Mongo (dueño = usuario autenticado)
+  - Respuesta incluye `s3Key` y `location`
+- `GET /files/:key` (protegido)
+  - Devuelve el contenido desde S3 por streaming
+  - Solo dueño o rol `admin` pueden acceder
 
-## Scripts disponibles  
-- npm run dev → Desarrollo (ts-node/nodemon)  
-- npm run build → Compilar a dist  
-- npm start → Ejecutar dist/index.js  
+## Cómo probar rápidamente
 
-## Tecnologías  
-- Node.js + Express (TypeScript)  
-- Swagger (swagger-jsdoc + swagger-ui-express)  
-- dotenv para variables de entorno  
+1) Registrar usuario (puede ser admin):
+```
+POST http://localhost:3000/auth/signup
+Content-Type: application/json
 
+{
+  "name": "Admin",
+  "email": "admin@example.com",
+  "password": "secret",
+  "role": "admin"
+}
+```
 
+2) Login para obtener token:
+```
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "secret"
+}
+```
+Guarda el valor `token` de la respuesta.
+
+3) Autorizar en Swagger:
+- Ir a `http://localhost:3000/swagger`
+- Click en “Authorize”
+- Pegar el token (sin el prefijo “Bearer ”). Swagger aplica el esquema Bearer.
+
+4) Probar endpoints protegidos (Swagger o Postman):
+- Agregar header `Authorization: Bearer <token>` en cada request
+
+Ejemplos (curl):
+- Listar usuarios:
+```
+curl "http://localhost:3000/users" -H "Authorization: Bearer <TOKEN>"
+```
+- Crear tarea:
+```
+curl -X POST "http://localhost:3000/tasks" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Tarea A","priority":"HIGH","estimateHours":4}'
+```
+- Subir archivo a S3:
+```
+curl -X POST "http://localhost:3000/files/upload" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -F "file=@/ruta/a/archivo.png"
+```
+- Descargar archivo por key (si eres owner o admin):
+```
+curl "http://localhost:3000/files/<S3_KEY>" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -o salida.bin
+```
+
+## Notas y troubleshooting
+- Si el servidor “no arranca”: valida `MONGO_URL` y tu red; el `app.listen` ocurre solo tras conectar a MongoDB.
+- S3: si faltan variables o el bucket/credenciales son inválidas, el módulo lanzará error al cargar.
+- CORS: no está configurado explícitamente; para pruebas locales usa Postman o Swagger.
+- Puerto: por defecto `3000` (o el definido en `.env`).
+- Express 5 + TypeScript: si `npm run dev` no levanta `.ts` directamente, usa `npx ts-node src/index.ts` o corre en modo producción tras compilar.
+
+## Tecnologías
+- Node.js + Express 5 (TypeScript)
+- MongoDB + Mongoose
+- JWT (bcrypt para hashing)
+- Multer + AWS S3 (aws-sdk v2)
+- Swagger (swagger-jsdoc + swagger-ui-express)
+- dotenv, hbs

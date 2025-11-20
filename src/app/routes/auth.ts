@@ -11,13 +11,6 @@ const router = Router();
  *   post:
  *     tags: [Auth]
  *     summary: Login
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -44,13 +37,6 @@ router.post('/login', login);
  *   post:
  *     tags: [Auth]
  *     summary: Registro 
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -61,7 +47,7 @@ router.post('/login', login);
  *               name: { type: string }
  *               email: { type: string, format: email }
  *               password: { type: string }
- *               role: { type: string }
+ *               role: { type: string, enum: [user, admin] }
  *     responses:
  *       200:
  *         description: OK (sin cuerpo)
