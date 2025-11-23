@@ -28,21 +28,11 @@
       <section class="bg-white rounded shadow p-4">
         <h2 class="text-lg font-semibold mb-3">Acciones Cliente → Servidor</h2>
 
-        <div class="mb-4">
-          <label class="block text-sm text-gray-600 mb-1">IDs de proyecto (comma-separated)</label>
-          <input id="projectIds" type="text" placeholder="p1,p2,p3" class="w-full border rounded px-3 py-2 text-sm mb-2"/>
-          <button id="btnJoinProjects" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded px-4 py-2">join:projects</button>
-        </div>
 
         <div class="mb-4">
           <button id="btnPing" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded px-4 py-2">ping</button>
         </div>
 
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">Task ID (para typing)</label>
-          <input id="taskId" type="text" placeholder="taskId" class="w-full border rounded px-3 py-2 text-sm mb-2"/>
-          <button id="btnTyping" class="bg-amber-600 hover:bg-amber-700 text-white text-sm rounded px-4 py-2">typing:task</button>
-        </div>
       </section>
     </div>
 
@@ -128,13 +118,6 @@
       }
     });
 
-    $("btnJoinProjects").addEventListener("click", () => {
-      if (!socket || !socket.connected) return alert("Conecta primero");
-      const raw = $("projectIds").value.trim();
-      const projectIds = raw ? raw.split(",").map(s => s.trim()).filter(Boolean) : [];
-      socket.emit("join:projects", { projectIds });
-      log("emit join:projects", { projectIds });
-    });
 
     $("btnPing").addEventListener("click", () => {
       if (!socket || !socket.connected) return alert("Conecta primero");
@@ -143,13 +126,6 @@
       log("emit ping", { ts });
     });
 
-    $("btnTyping").addEventListener("click", () => {
-      if (!socket || !socket.connected) return alert("Conecta primero");
-      const taskId = $("taskId").value.trim();
-      if (!taskId) return alert("Ingresa un taskId");
-      socket.emit("typing:task", { taskId });
-      log("emit typing:task", { taskId });
-    });
   </script>
 </body>
 </html>

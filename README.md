@@ -67,7 +67,7 @@ npm start
 
 Mensajes esperados al iniciar:
 - “Ya se conecto!” (Mongo conectado)
-- “App is running in port <PORT>”
+- “HTTP + Socket.IO server listening on port <PORT>”
 
 Base URL local por defecto: `http://localhost:3000`
 
@@ -207,7 +207,7 @@ El payload debe contener `id` y `role` (según lo generado por el login). El ser
 
 ### Rooms
 - Room personal por usuario: `user:<userId>`
-- Rooms por proyecto (opcional): el cliente puede unirse vía evento `join:projects` con `projectIds[]`.
+- Rooms por proyecto (opcional): disponibles vía API Socket.IO (evento `join:projects`), no incluidas en la vista de demo.
 - Hooks listos para rooms por tarea si se requiere en el futuro.
 
 ### Eventos Servidor → Cliente (emitidos por el backend)
@@ -229,15 +229,14 @@ Los controladores REST emiten:
 - Files: `upload` → `publishFileUploaded` (delete opcional)
 
 ### Eventos Cliente → Servidor
-- `join:projects` ({ projectIds: string[] }) — une el socket a `project:<id>` para cada id.
-- `typing:task` ({ taskId: string }) — hook opcional (no emite por defecto).
 - `ping` ({ ts: number }) — el servidor responde `pong` con el mismo timestamp.
+- Opcionales (no visibles en la vista demo): `join:projects` ({ projectIds: string[] }), `typing:task` ({ taskId: string }).
 
 ### Vista de prueba
 - `GET /socket-demo` — Página HBS con UI mínima:
   1. Pega tu JWT y haz click en “Conectar”
-  2. Verifica logs de `presence:*` y `pong`
-  3. Opcional: envía `join:projects`, `ping`, `typing:task`
+  2. Presiona “ping” y verifica el “pong”
+  3. Observa en los logs los eventos `presence:*`, `task:*`, `goal:*`, `file:*` al usar los endpoints REST
 - El cliente usa `/socket.io/socket.io.js` y se autentica con header `Authorization: Bearer <TOKEN>`.
 
 ### Pruebas rápidas de eventos
