@@ -37,8 +37,23 @@ router.use(authMiddleware)
  *     responses:
  *       201:
  *         description: Archivo subido con éxito
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *             example:
+ *               message: "Archivo subido con éxito"
+ *               s3Key: "uploads/2025/11/imagen.png"
+ *               location: "https://s3.amazonaws.com/mi-bucket/uploads/2025/11/imagen.png"
+ *               dbId: "6742a1c2f0a1b2c3d4e5f6aa"
  *       400:
  *         description: Error de validación (tipo, tamaño) o no se envió archivo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *             example:
+ *               message: "No se envió ningún archivo"
  */
 router.post("/upload", upload.single('file'), uploadFile);
 
@@ -56,12 +71,19 @@ router.post("/upload", upload.single('file'), uploadFile);
  *         name: key
  *         required: true
  *         schema: { type: string }
+ *         example: "uploads/2025/11/imagen.png"
  *         description: La S3 Key del archivo
  *     responses:
  *       200:
  *         description: Archivo obtenido
  *       404:
  *         description: Archivo no encontrado o sin permisos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *             example:
+ *               message: "Archivo no encontrado"
  */
 router.get("/:key", getFile);
 
