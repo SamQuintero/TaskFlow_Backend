@@ -16,5 +16,8 @@ router.use("/goals", goalRoutes);
 router.use("/calendar", calendarRoutes);
 router.use("/files", fileRoutes);
 
+router.get("/socket-demo", (req, res) => {
+  res.render("socket-demo");
+});
 
 export default router;

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { uploadFileToS3, getFileStreamFromS3 } from "../services/s3";
 import { FileModel } from '../models/file';
+import { publishFileUploaded } from "../../realtime/publishers";
 
 // Controlador para subir un archivo a S3
 export const uploadFile = async (req: Request, res: Response) => {
@@ -27,6 +28,20 @@ export const uploadFile = async (req: Request, res: Response) => {
   
       console.log("Archivo subido a S3:", result.Key);
       console.log("Metadata guardada en DB:", newDbFile._id);
+
+      try {
+        publishFileUploaded(
+          {
+            id: String(newDbFile._id),
+            s3Key: result.Key,
+            fileName: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+            owner: userId
+          },
+          { userId }
+        );
+      } catch {}
   
       res.status(201).json({
         message: "Archivo subido con éxito",

@@ -21,6 +21,12 @@ router.use(authMiddleware)
  *     responses:
  *       200:
  *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *             example:
+ *               message: "Calendar synced"
  */
 router.post("/sync", syncCalendar);
 /**
@@ -39,6 +45,20 @@ router.post("/sync", syncCalendar);
  *     responses:
  *       200:
  *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items: { type: object }
+ *             example:
+ *               data:
+ *                 - id: "evt-1"
+ *                   title: "Evento 1"
+ *                   start: "2025-12-01T09:00:00.000Z"
+ *                   end: "2025-12-01T10:00:00.000Z"
  */
 router.get("/events", getEvents);
 

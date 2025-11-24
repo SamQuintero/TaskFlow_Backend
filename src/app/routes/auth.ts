@@ -20,6 +20,9 @@ const router = Router();
  *             properties:
  *               email: { type: string, format: email }
  *               password: { type: string }
+ *             example:
+ *               email: "user@example.com"
+ *               password: "secret"
  *     responses:
  *       200:
  *         description: OK
@@ -29,6 +32,8 @@ const router = Router();
  *               type: object
  *               properties:
  *                 token: { type: string }
+ *             example:
+ *               token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  */
 router.post('/login', login);
 /**
@@ -48,6 +53,11 @@ router.post('/login', login);
  *               email: { type: string, format: email }
  *               password: { type: string }
  *               role: { type: string, enum: [user, admin] }
+ *             example:
+ *               name: "Juan Pérez"
+ *               email: "juan@example.com"
+ *               password: "secret"
+ *               role: "user"
  *     responses:
  *       200:
  *         description: OK (sin cuerpo)

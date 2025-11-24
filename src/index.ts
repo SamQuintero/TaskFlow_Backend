@@ -9,9 +9,11 @@ import swaggerOptions from "./../swagger.config";
 
 
 import routes from "./app/routes";
+import http from "http";
+import { initRealtime } from "./realtime";
 
 
-const port = process.env.PORT || 3001; 
+const port = process.env.PORT || 3000; 
 const dbUrl = process.env.MONGO_URL;
 const app = express();
 
@@ -19,6 +21,9 @@ app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "app/views"));
 
 app.use(express.json());
+
+const server = http.createServer(app);
+initRealtime(server);
 
 
 app.use(routes);
@@ -33,11 +38,9 @@ app.use('/swagger', serve, setup(swaggerDocs));
 
 connectDB().then(res => {
     console.log('Ya se conecto!');
-    app.listen(port, () => {
-        console.log(`App is running in port ${port}`);
+    server.listen(port, () => {
+        console.log(`HTTP + Socket.IO server listening on port ${port}`);
     })
 }).catch(err => {
     console.log('Ocurrio un error');
 });
-
-

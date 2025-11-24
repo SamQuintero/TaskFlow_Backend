@@ -27,7 +27,17 @@ router.use(authMiddleware)
  *             schema:
  *               type: object
  *               properties:
- *                 message: { type: string }
+ *                 data:
+ *                   type: array
+ *                   items: { type: object }
+ *             example:
+ *               data:
+ *                 - id: "6742a1c2f0a1b2c3d4e5f6a1"
+ *                   title: "Tarea A"
+ *                   priority: "HIGH"
+ *                   estimateHours: 4
+ *                   dueDate: "2025-12-31T00:00:00.000Z"
+ *                   completed: false
  */
 router.get("/", getTasks);
 /**
@@ -47,9 +57,24 @@ router.get("/", getTasks);
  *         name: id
  *         required: true
  *         schema: { type: string }
+ *         example: "6742a1c2f0a1b2c3d4e5f6a7"
  *     responses:
  *       200:
  *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data: { type: object }
+ *             example:
+ *               data:
+ *                 id: "6742a1c2f0a1b2c3d4e5f6a7"
+ *                 title: "Tarea A"
+ *                 priority: "HIGH"
+ *                 estimateHours: 4
+ *                 dueDate: "2025-12-31T00:00:00.000Z"
+ *                 completed: false
  */
 router.get("/:id", getTask);
 /**
@@ -76,6 +101,11 @@ router.get("/:id", getTask);
  *               priority: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
  *               estimateHours: { type: number }
  *               dueDate: { type: string, format: date-time }
+ *           example:
+ *             title: "Tarea Realtime"
+ *             priority: "HIGH"
+ *             estimateHours: 4
+ *             dueDate: "2025-12-31T00:00:00.000Z"
  *     responses:
  *       201:
  *         description: Creada
@@ -85,6 +115,14 @@ router.get("/:id", getTask);
  *               type: object
  *               properties:
  *                 message: { type: string }
+ *             example:
+ *               data:
+ *                 id: "6742a1c2f0a1b2c3d4e5f6a7"
+ *                 title: "Tarea Realtime"
+ *                 priority: "HIGH"
+ *                 estimateHours: 4
+ *                 dueDate: "2025-12-31T00:00:00.000Z"
+ *                 completed: false
  */
 router.post("/", createTask);
 /**
@@ -104,12 +142,18 @@ router.post("/", createTask);
  *         name: id
  *         required: true
  *         schema: { type: string }
+ *         example: "6742a1c2f0a1b2c3d4e5f6a7"
  *     requestBody:
  *       required: false
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *           example:
+ *             title: "Tarea Actualizada"
+ *             priority: "MEDIUM"
+ *             estimateHours: 6
+ *             dueDate: "2026-01-15T00:00:00.000Z"
  *     responses:
  *       200:
  *         description: Actualizada
@@ -119,6 +163,14 @@ router.post("/", createTask);
  *               type: object
  *               properties:
  *                 message: { type: string }
+ *             example:
+ *               data:
+ *                 id: "6742a1c2f0a1b2c3d4e5f6a7"
+ *                 title: "Tarea Actualizada"
+ *                 priority: "MEDIUM"
+ *                 estimateHours: 6
+ *                 dueDate: "2026-01-15T00:00:00.000Z"
+ *                 completed: false
  */
 router.put("/:id", updateTask);
 /**
@@ -147,6 +199,8 @@ router.put("/:id", updateTask);
  *               type: object
  *               properties:
  *                 message: { type: string }
+ *             example:
+ *               message: "Task deleted"
  */
 router.delete("/:id", authorizeRoles('admin'), deleteTask);
 

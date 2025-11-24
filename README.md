@@ -67,7 +67,7 @@ npm start
 
 Mensajes esperados al iniciar:
 - “Ya se conecto!” (Mongo conectado)
-- “App is running in port <PORT>”
+- “HTTP + Socket.IO server listening on port <PORT>”
 
 Base URL local por defecto: `http://localhost:3000`
 
@@ -189,6 +189,100 @@ curl "http://localhost:3000/files/<S3_KEY>" \
   -H "Authorization: Bearer <TOKEN>" \
   -o salida.bin
 ```
+
+## Tiempo real (WebSockets)
+
+Este proyecto integra Socket.IO para comunicación en tiempo real (servidor ↔ cliente) con autenticación JWT en el handshake, rooms por usuario y soporte para rooms por proyecto.
+
+- Servidor: Socket.IO se inicializa sobre el HTTP server de Express. No requiere pasos adicionales para arrancar más allá de `npm run dev` (o build + start en prod).
+- Cliente: se sirve automáticamente el script en `/socket.io/socket.io.js`.
+
+### Autenticación (handshake)
+El servidor valida tu JWT durante el handshake de Socket.IO. Puedes enviar el token de cualquiera de estas formas:
+- En headers: `Authorization: Bearer <TOKEN>`
+- En query: `?token=<TOKEN>`
+- En auth payload del cliente: `{ auth: { token: "<TOKEN>" } }`
+
+El payload debe contener `id` y `role` (según lo generado por el login). El servidor unirá al socket a la room personal `user:<id>` y emitirá presencia.
+
+### Rooms
+- Room personal por usuario: `user:<userId>`
+- Rooms por proyecto (opcional): disponibles vía API Socket.IO (evento `join:projects`), no incluidas en la vista de demo.
+- Hooks listos para rooms por tarea si se requiere en el futuro.
+
+### Eventos Servidor → Cliente (emitidos por el backend)
+- `presence:user:online` ({ userId })
+- `presence:user:offline` ({ userId })
+- `task:created` (payload libre)
+- `task:updated` (payload libre)
+- `task:deleted` (payload libre)
+- `goal:created` (payload libre)
+- `goal:updated` (payload libre)
+- `goal:deleted` (payload libre)
+- `file:uploaded` (payload libre)
+- `file:deleted` (payload libre) [placeholder si implementas eliminación de archivos]
+- `pong` ({ ts })
+
+Los controladores REST emiten:
+- Tasks: `create/update/delete` → publicadores (`publishTaskCreated/Updated/Deleted`)
+- Goals: `create/update/delete` → publicadores
+- Files: `upload` → `publishFileUploaded` (delete opcional)
+
+### Eventos Cliente → Servidor
+- `ping` ({ ts: number }) — el servidor responde `pong` con el mismo timestamp.
+- Opcionales (no visibles en la vista demo): `join:projects` ({ projectIds: string[] }), `typing:task` ({ taskId: string }).
+
+### Vista de prueba
+- `GET /socket-demo` — Página HBS con UI mínima:
+  1. Pega tu JWT y haz click en “Conectar”
+  2. Presiona “ping” y verifica el “pong”
+  3. Observa en los logs los eventos `presence:*`, `task:*`, `goal:*`, `file:*` al usar los endpoints REST
+- El cliente usa `/socket.io/socket.io.js` y se autentica con header `Authorization: Bearer <TOKEN>`.
+
+### Pruebas rápidas de eventos
+1) Abre `http://localhost:3000/socket-demo`, pega tu token y conecta.
+2) En otra terminal, crea una tarea por REST:
+```
+curl -X POST "http://localhost:3000/tasks" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Tarea Realtime"}'
+```
+3) Observa en la vista que llega `task:created` con el payload.
+
+Para Goals y Files:
+- Crea/actualiza/elimina metas vía `/goals` y observa `goal:*`.
+- Sube un archivo vía `/files/upload` y observa `file:uploaded`.
+
+### Ejemplo de cliente HTML simple
+```html
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const token = "<TOKEN>";
+  const socket = io("/", {
+    extraHeaders: { Authorization: `Bearer ${token}` }
+    // o bien: auth: { token }, o query: { token }
+  });
+
+  socket.on("connect", () => console.log("connected", socket.id));
+  socket.on("task:created", (data) => console.log("task:created", data));
+  socket.emit("ping", { ts: Date.now() });
+  socket.on("pong", (data) => console.log("pong", data));
+</script>
+```
+
+### Seguridad y notas
+- Autenticación con JWT en el handshake. No expongas datos sensibles en los eventos.
+- Rooms por usuario: emite a `user:<id>` para notificaciones personales.
+- CORS: ajusta la opción `cors.origin` en `src/realtime/index.ts` si el frontend corre en otro origen.
+- Proxy/HTTPS: si hay proxy inverso, habilita `app.set('trust proxy', 1)` y configura correctamente el servidor para WebSockets.
+- Namespaces: puedes aislar la capa en un namespace (p.ej. `/realtime`) si se requiere.
+- Rate limiting de eventos (opcional) y logging de conexiones pueden añadirse.
+
+### Problemas comunes
+- “UNAUTHORIZED” al conectar: el token no se envía o es inválido; revisa el header/query/auth del cliente.
+- No veo `presence:user:online`: verifica que el handshake pasó y que el cliente no reconecte con otro token.
+- No llegan eventos `task:*`: confirma que el endpoint REST fue exitoso y que `publishers.ts` esté importado en los controladores correspondientes.
 
 ## Notas y troubleshooting
 - Si el servidor “no arranca”: valida `MONGO_URL` y tu red; el `app.listen` ocurre solo tras conectar a MongoDB.

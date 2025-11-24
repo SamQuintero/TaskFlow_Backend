@@ -20,6 +20,21 @@ router.use(authMiddleware)
  *     responses:
  *       200:
  *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items: { type: object }
+ *             example:
+ *               data:
+ *                 - id: "6742a1c2f0a1b2c3d4e5f6a1"
+ *                   title: "Meta A"
+ *                   description: "Desc A"
+ *                   dueDate: "2025-12-31T00:00:00.000Z"
+ *                   completed: false
  */
 router.get("/", getGoals);
 /**
@@ -42,6 +57,19 @@ router.get("/", getGoals);
  *     responses:
  *       200:
  *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data: { type: object }
+ *             example:
+ *               data:
+ *                 id: "6742a1c2f0a1b2c3d4e5f6a7"
+ *                 title: "Meta A"
+ *                 description: "Desc A"
+ *                 dueDate: "2025-12-31T00:00:00.000Z"
+ *                 completed: false
  */
 router.get("/:id", getGoal);
 /**
@@ -63,9 +91,27 @@ router.get("/:id", getGoal);
  *         application/json:
  *           schema:
  *             type: object
+ *           example:
+ *             title: "Meta Realtime"
+ *             description: "Descripción de la meta"
+ *             dueDate: "2025-12-31T00:00:00.000Z"
+ *             completed: false
  *     responses:
  *       201:
  *         description: Creada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data: { type: object }
+ *             example:
+ *               data:
+ *                 id: "6742a1c2f0a1b2c3d4e5f6a7"
+ *                 title: "Meta Realtime"
+ *                 description: "Descripción de la meta"
+ *                 dueDate: "2025-12-31T00:00:00.000Z"
+ *                 completed: false
  */
 router.post("/", createGoal);
 /**
@@ -85,9 +131,33 @@ router.post("/", createGoal);
  *         name: id
  *         required: true
  *         schema: { type: string }
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *           example:
+ *             title: "Meta Actualizada"
+ *             description: "Nueva descripción"
+ *             dueDate: "2026-01-15T00:00:00.000Z"
+ *             completed: true
  *     responses:
  *       200:
  *         description: Actualizada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data: { type: object }
+ *             example:
+ *               data:
+ *                 id: "6742a1c2f0a1b2c3d4e5f6a7"
+ *                 title: "Meta Actualizada"
+ *                 description: "Nueva descripción"
+ *                 dueDate: "2026-01-15T00:00:00.000Z"
+ *                 completed: true
  */
 router.put("/:id", updateGoal);
 /**
@@ -110,6 +180,12 @@ router.put("/:id", updateGoal);
  *     responses:
  *       200:
  *         description: Eliminada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *             example:
+ *               message: "Goal deleted"
  */
 router.delete("/:id",authorizeRoles('admin'), deleteGoal);
 
