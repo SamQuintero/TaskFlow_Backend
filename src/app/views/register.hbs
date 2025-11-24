@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crear cuenta | TaskFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .tf-input { @apply h-10 w-full rounded-md border px-3 text-sm outline-none; }
+    .tf-btn { @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium; }
+    .tf-btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
+    .tf-btn-outline { @apply border hover:bg-gray-50; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <header class="border-b bg-white">
+    <div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+      <a href="/" class="font-semibold">TaskFlow</a>
+      <nav class="text-sm">
+        <a class="hover:underline underline-offset-4" href="/login">Ingresar</a>
+        <span class="mx-2 text-gray-400">/</span>
+        <a class="text-blue-600 underline underline-offset-4" href="/register">Crear cuenta</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-12">
+    <div class="mx-auto max-w-md">
+      <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold tracking-tight">Crear cuenta</h1>
+        <p class="mt-2 text-sm text-gray-600">
+          Registra tu cuenta para comenzar a usar la aplicación.
+        </p>
+      </div>
+
+      <form id="registerForm" class="space-y-4 rounded-lg border bg-white p-6 shadow-sm">
+        <div class="space-y-1">
+          <label class="text-sm text-gray-700">Nombre</label>
+          <input id="name" type="text" class="tf-input border-gray-300" placeholder="Tu nombre" required />
+        </div>
+        <div class="space-y-1">
+          <label class="text-sm text-gray-700">Correo</label>
+          <input id="email" type="email" class="tf-input border-gray-300" placeholder="usuario@ejemplo.com" required />
+        </div>
+        <div class="space-y-1">
+          <label class="text-sm text-gray-700">Contraseña</label>
+          <input id="password" type="password" class="tf-input border-gray-300" placeholder="••••••••" required />
+        </div>
+
+        <button type="submit" id="btnRegister" class="tf-btn tf-btn-primary w-full">Crear cuenta</button>
+
+        <p id="msg" class="mt-2 text-center text-sm text-red-600 hidden"></p>
+
+        <div class="pt-2 text-center text-sm text-gray-600">
+          ¿Ya tienes cuenta?
+          <a href="/login" class="text-blue-600 underline underline-offset-4">Ingresar</a>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <footer class="border-t bg-white">
+    <div class="mx-auto max-w-6xl px-4 py-6 text-center text-xs text-gray-500">
+      TaskFlow &middot; Uso educativo/demostrativo
+    </div>
+  </footer>
+
+  <script>
+    const TOKEN_KEY = "taskflow_token";
+
+    function setAuthToken(token) {
+      if (!token) localStorage.removeItem(TOKEN_KEY);
+      else localStorage.setItem(TOKEN_KEY, token);
+    }
+
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+
+    async function signup(name, email, password) {
+      const res = await fetch("/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Por defecto creamos con rol "user" en el backend
+        body: JSON.stringify({ name, email, password, role: "user" }),
+      });
+      if (!res.ok) {
+        let message = "No se pudo registrar";
+        try {
+          const j = await res.json();
+          message = j.message || message;
+        } catch {}
+        throw new Error(message);
+      }
+      return res.json();
+    }
+
+    async function login(email, password) {
+      const res = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        let message = "Credenciales inválidas";
+        try {
+          const j = await res.json();
+          message = j.message || message;
+        } catch {}
+        throw new Error(message);
+      }
+      return res.json(); // { message, token }
+    }
+
+    const form = document.getElementById("registerForm");
+    const btn = document.getElementById("btnRegister");
+    const msg = document.getElementById("msg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.classList.add("hidden");
+      btn.disabled = true;
+      btn.textContent = "Creando...";
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        await signup(name, email, password);
+        const { token } = await login(email, password);
+        setAuthToken(token);
+        const returnTo = getQueryParam("returnTo") || "/app/dashboard";
+        window.location.href = returnTo;
+      } catch (err) {
+        msg.textContent = err.message || "No fue posible crear la cuenta";
+        msg.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Crear cuenta";
+      }
+    });
+  </script>
+</body>
+</html>

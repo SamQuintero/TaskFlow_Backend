@@ -2,6 +2,8 @@ import express, { Request, Response } from "express";
 import dotenv from "dotenv"
 import { connectDB } from "./database";
 import path from "path";
+import fs from "fs";
+import hbs from "hbs";
 dotenv.config()
 import swaggerJsDoc from "swagger-jsdoc"
 import { setup, serve} from "swagger-ui-express"
@@ -17,8 +19,31 @@ const port = process.env.PORT || 3000;
 const dbUrl = process.env.MONGO_URL;
 const app = express();
 
+const viewsDir = path.join(__dirname, "app/views");
+const partialsDir = path.join(__dirname, "app/views/partials");
+
+app.engine("hbs", (hbs as any).__express);
 app.set("view engine", "hbs");
-app.set("views", path.join(__dirname, "app/views"));
+app.set("views", viewsDir);
+hbs.registerPartials(partialsDir);
+
+console.log("HBS views:", viewsDir);
+console.log("HBS partials:", partialsDir);
+
+// Manual partials registration as a fallback
+try {
+  const partialNames = ["app-navbar", "app-sidebar", "app-footer", "app-guard-scripts"];
+  for (const name of partialNames) {
+    const filePath = path.join(partialsDir, name + ".hbs");
+    if (fs.existsSync(filePath)) {
+      const source = fs.readFileSync(filePath, "utf8");
+      hbs.registerPartial(name, source);
+    }
+  }
+  console.log("HBS manual partials registered");
+} catch (e) {
+  console.warn("HBS manual partials registration failed:", e);
+}
 
 app.use(express.json());
 
