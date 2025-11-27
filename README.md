@@ -1,5 +1,38 @@
 # TaskFlow Backend (API + Vistas HBS)
 
+## Cómo ver las vistas (rápido)
+1) Levantar el servidor en desarrollo:
+```
+npm run dev
+```
+Verás en consola algo como:
+- Ya se conecto!
+- HTTP + Socket.IO server listening on port 3000
+- HBS views: …/src/app/views
+- HBS partials: …/src/app/views/partials
+
+2) Abrir las vistas en el navegador:
+- Públicas:
+  - Login: http://localhost:3000/login
+  - Registro: http://localhost:3000/register
+- Autenticadas (requieren JWT en localStorage, si no hay token te redirige a /login):
+  - Dashboard: http://localhost:3000/app/dashboard
+  - Usuarios (admin): http://localhost:3000/app/users
+  - Tareas: http://localhost:3000/app/tasks
+  - Metas: http://localhost:3000/app/goals
+  - Calendario: http://localhost:3000/app/calendar
+  - Archivos (uploader S3): http://localhost:3000/app/files
+- Extras:
+  - Uploader simple (pública): http://localhost:3000/files/view
+  - Socket demo: http://localhost:3000/socket-demo
+  - Swagger: http://localhost:3000/swagger
+
+Notas:
+- Inicia sesión en /login; al autenticarte se guarda el token en localStorage y te envía a /app/dashboard.
+- Si visitas cualquier ruta /app/* sin token, el guard te redirige a /login?returnTo=/app/...
+
+---
+
 ## Descripción
 Backend en TypeScript/Express para el proyecto “TaskFlow”. Incluye:
 - API REST con autenticación JWT (login/signup), CRUD de usuarios, tareas y metas
@@ -79,7 +112,8 @@ Base URL local por defecto: `http://localhost:3000`
 - Health: `GET /` → "api works"
 - Swagger UI: `GET /swagger`
 
-## UI SSR (Handlebars)  (layout con Navbar/Sidebar/Footer, guards de sesión/roles en cliente y consumo de la API con fetch nativo).
+## UI SSR (Handlebars) al estilo TaskFlowUI
+Se añadieron vistas SSR con Handlebars que emulan el patrón de TaskFlowUI (layout con Navbar/Sidebar/Footer, guards de sesión/roles en cliente y consumo de la API con fetch nativo).
 
 Rutas SSR disponibles:
 - Públicas:
@@ -210,7 +244,7 @@ curl "http://localhost:3000/users" -H "Authorization: Bearer <TOKEN>"
 - Crear tarea:
 ```
 curl -X POST "http://localhost:3000/tasks" \
-  -H "Authorization: Bearer <TOKEN>" \
+  -H "Authorization: Bearer <TOKEN)" \
   -H "Content-Type: application/json" \
   -d '{"title":"Tarea A","priority":"HIGH","estimateHours":4}'
 ```
