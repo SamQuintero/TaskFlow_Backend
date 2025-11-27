@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Administración / Usuarios | TaskFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  {{> app-navbar}}
+
+  <div class="mx-auto max-w-6xl px-4">
+    <div class="grid min-h-[calc(100vh-56px-56px)] grid-cols-1 md:grid-cols-[240px_1fr]">
+      {{> app-sidebar}}
+
+      <main class="flex min-h-full flex-col p-4 md:p-6">
+        <div class="mb-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+          <h1 class="text-2xl font-bold tracking-tight">Administración / Usuarios</h1>
+          <div class="flex items-center gap-2">
+            <button id="btnRefresh" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Refrescar</button>
+          </div>
+        </div>
+
+        <!-- Crear usuario (solo admin) -->
+        <section id="createUserSection" class="mb-4 hidden rounded-lg border bg-white p-4">
+          <h2 class="mb-3 text-lg font-semibold">Crear usuario</h2>
+          <form id="createUserForm" class="grid gap-3 sm:grid-cols-3">
+            <input id="cu_name" type="text" placeholder="Nombre" class="h-10 w-full rounded border px-3 text-sm" required />
+            <input id="cu_email" type="email" placeholder="Correo" class="h-10 w-full rounded border px-3 text-sm" required />
+            <input id="cu_password" type="password" placeholder="Contraseña" class="h-10 w-full rounded border px-3 text-sm" required />
+            <div class="sm:col-span-3">
+              <button class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Crear</button>
+              <span id="createMsg" class="ml-2 text-sm"></span>
+            </div>
+          </form>
+        </section>
+
+        <section class="rounded-lg border bg-white">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-left">
+                <tr>
+                  <th class="px-3 py-2 font-medium">Nombre</th>
+                  <th class="px-3 py-2 font-medium">Correo</th>
+                  <th class="px-3 py-2 font-medium">Rol</th>
+                  <th class="px-3 py-2 font-medium"></th>
+                </tr>
+              </thead>
+              <tbody id="usersTbody">
+                <tr>
+                  <td colspan="4" class="px-3 py-6 text-center text-gray-500">Cargando...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="mt-2 text-xs text-gray-500" id="listMeta"></div>
+
+        <template id="userRowTpl">
+          <tr class="border-t">
+            <td class="px-3 py-2"><span data-field="name"></span></td>
+            <td class="px-3 py-2"><span data-field="email"></span></td>
+            <td class="px-3 py-2">
+              <select data-field="role" class="h-8 rounded border px-2 text-sm">
+                <option value="user">user</option>
+                <option value="admin">admin</option>
+              </select>
+            </td>
+            <td class="px-3 py-2">
+              <div class="flex items-center gap-2">
+                <button data-action="save" class="rounded border px-3 py-1 text-xs hover:bg-gray-50">Guardar</button>
+                <button data-action="delete" class="hidden rounded border px-3 py-1 text-xs text-red-700 hover:bg-red-50">Eliminar</button>
+                <span data-field="rowMsg" class="text-xs"></span>
+              </div>
+            </td>
+          </tr>
+        </template>
+      </main>
+    </div>
+  </div>
+
+  {{> app-footer}}
+  {{> app-guard-scripts}}
+
+  <script>
+    const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+    const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
+
+    function isAdminRole() {
+      try {
+        const t = window.TaskFlowAuth.getToken();
+        const p = t ? window.TaskFlowAuth.decodeJwt(t) : null;
+        return p?.role === "admin";
+      } catch { return false; }
+    }
+
+    async function loadUsers() {
+      const tbody = $("#usersTbody");
+      tbody.innerHTML = '<tr><td colspan="4" class="px-3 py-6 text-center text-gray-500">Cargando...</td></tr>';
+      try {
+        // getUsers devuelve un array directamente (no { data: ... })
+        const users = await window.apiFetch("/users", { method: "GET" });
+        renderUsers(users);
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-3 py-6 text-center text-red-600">Error cargando usuarios: ' + (err.message || 'Error') + '</td></tr>';
+      }
+    }
+
+    function renderUsers(users) {
+      const tbody = $("#usersTbody");
+      const tpl = $("#userRowTpl");
+      tbody.innerHTML = "";
+      const admin = isAdminRole();
+
+      if (!users || !users.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-3 py-6 text-center text-gray-500">Aún no hay usuarios</td></tr>';
+        $("#listMeta").textContent = "0 resultado(s)";
+        return;
+      }
+
+      $("#listMeta").textContent = users.length + " resultado(s)";
+
+      users.forEach(u => {
+        const row = tpl.content.firstElementChild.cloneNode(true);
+        $('[data-field="name"]', row).textContent = u.name || "-";
+        $('[data-field="email"]', row).textContent = u.email || "-";
+        const roleSel = $('[data-field="role"]', row);
+        roleSel.value = u.role || "user";
+        roleSel.disabled = !admin;
+
+        const btnSave = $('[data-action="save"]', row);
+        const btnDelete = $('[data-action="delete"]', row);
+        const rowMsg = $('[data-field="rowMsg"]', row);
+
+        if (admin) {
+          btnDelete.classList.remove("hidden");
+        }
+
+        btnSave.addEventListener("click", async () => {
+          rowMsg.textContent = "Guardando...";
+          try {
+            const updated = await window.apiFetch("/users/" + u._id, {
+              method: "PUT",
+              body: JSON.stringify({ role: roleSel.value })
+            });
+            rowMsg.textContent = "Actualizado";
+            setTimeout(() => rowMsg.textContent = "", 1500);
+          } catch (err) {
+            rowMsg.textContent = "Error: " + (err.message || "no se pudo actualizar");
+          }
+        });
+
+        btnDelete.addEventListener("click", async () => {
+          if (!confirm("¿Eliminar este usuario?")) return;
+          rowMsg.textContent = "Eliminando...";
+          try {
+            await window.apiFetch("/users/" + u._id, { method: "DELETE" });
+            row.remove();
+          } catch (err) {
+            rowMsg.textContent = "Error: " + (err.message || "no se pudo eliminar");
+          }
+        });
+
+        tbody.appendChild(row);
+      });
+    }
+
+    function setupCreateUser() {
+      const section = $("#createUserSection");
+      const isAdmin = isAdminRole();
+      if (!isAdmin) {
+        section.classList.add("hidden");
+        return;
+      }
+      section.classList.remove("hidden");
+
+      const form = $("#createUserForm");
+      const msg = $("#createMsg");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        msg.textContent = "Creando...";
+        msg.className = "ml-2 text-sm text-gray-600";
+        const name = $("#cu_name").value.trim();
+        const email = $("#cu_email").value.trim();
+        const password = $("#cu_password").value;
+        try {
+          await window.apiFetch("/users", {
+            method: "POST",
+            body: JSON.stringify({ name, email, password })
+          });
+          msg.textContent = "Creado";
+          msg.className = "ml-2 text-sm text-green-600";
+          $("#cu_name").value = "";
+          $("#cu_email").value = "";
+          $("#cu_password").value = "";
+          await loadUsers();
+        } catch (err) {
+          msg.textContent = "Error: " + (err.message || "no se pudo crear");
+          msg.className = "ml-2 text-sm text-red-600";
+        }
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      $("#btnRefresh").addEventListener("click", loadUsers);
+      setupCreateUser();
+      loadUsers();
+    });
+  </script>
+</body>
+</html>

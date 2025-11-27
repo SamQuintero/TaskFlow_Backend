@@ -20,4 +20,37 @@ router.get("/socket-demo", (req, res) => {
   res.render("socket-demo");
 });
 
+// Vistas SSR (HBS)
+router.get("/login", (req, res) => {
+  res.render("login");
+});
+
+router.get("/register", (req, res) => {
+  res.render("register");
+});
+
+router.get("/app/dashboard", (req, res) => {
+  res.render("app-dashboard");
+});
+
+router.get("/app/users", (req, res) => {
+  res.render("app-users");
+});
+
+router.get("/app/tasks", (req, res) => {
+  res.render("app-tasks");
+});
+
+router.get("/app/goals", (req, res) => {
+  res.render("app-goals");
+});
+
+router.get("/app/calendar", (req, res) => {
+  res.render("app-calendar");
+});
+
+router.get("/app/files", (req, res) => {
+  res.render("app-files");
+});
+
 export default router;

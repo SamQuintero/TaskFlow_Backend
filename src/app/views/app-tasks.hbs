@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tareas | TaskFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  {{> app-navbar}}
+
+  <div class="mx-auto max-w-6xl px-4">
+    <div class="grid min-h-[calc(100vh-56px-56px)] grid-cols-1 md:grid-cols-[240px_1fr]">
+      {{> app-sidebar}}
+
+      <main class="flex min-h-full flex-col p-4 md:p-6">
+        <div class="mb-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+          <h1 class="text-2xl font-bold tracking-tight">Tareas</h1>
+          <div class="flex items-center gap-2">
+            <button id="btnRefresh" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Refrescar</button>
+          </div>
+        </div>
+
+        <!-- Crear tarea -->
+        <section class="mb-4 rounded-lg border bg-white p-4">
+          <h2 class="mb-3 text-lg font-semibold">Crear tarea</h2>
+          <form id="createTaskForm" class="grid gap-3 md:grid-cols-5">
+            <input id="ct_title" type="text" placeholder="Título" class="h-10 w-full rounded border px-3 text-sm md:col-span-2" required />
+            <select id="ct_priority" class="h-10 w-full rounded border px-3 text-sm">
+              <option value="LOW">LOW</option>
+              <option value="MEDIUM">MEDIUM</option>
+              <option value="HIGH">HIGH</option>
+              <option value="CRITICAL">CRITICAL</option>
+            </select>
+            <input id="ct_est" type="number" min="0" step="1" placeholder="Horas" class="h-10 w-full rounded border px-3 text-sm" />
+            <input id="ct_due" type="date" class="h-10 w-full rounded border px-3 text-sm" />
+            <div class="md:col-span-5">
+              <button class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Crear</button>
+              <span id="createMsg" class="ml-2 text-sm"></span>
+            </div>
+          </form>
+        </section>
+
+        <!-- Tabla de tareas -->
+        <section class="rounded-lg border bg-white">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-left">
+                <tr>
+                  <th class="px-3 py-2 font-medium">Título</th>
+                  <th class="px-3 py-2 font-medium">Prioridad</th>
+                  <th class="px-3 py-2 font-medium">Horas</th>
+                  <th class="px-3 py-2 font-medium">Vence</th>
+                  <th class="px-3 py-2 font-medium">Completada</th>
+                  <th class="px-3 py-2 font-medium"></th>
+                </tr>
+              </thead>
+              <tbody id="tasksTbody">
+                <tr>
+                  <td colspan="6" class="px-3 py-6 text-center text-gray-500">Cargando...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="mt-2 text-xs text-gray-500" id="listMeta"></div>
+
+        <template id="taskRowTpl">
+          <tr class="border-t align-top">
+            <td class="px-3 py-2">
+              <input data-field="title" type="text" class="h-8 w-full rounded border px-2 text-sm" />
+            </td>
+            <td class="px-3 py-2">
+              <select data-field="priority" class="h-8 w-full rounded border px-2 text-sm">
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL</option>
+              </select>
+            </td>
+            <td class="px-3 py-2">
+              <input data-field="estimateHours" type="number" min="0" step="1" class="h-8 w-24 rounded border px-2 text-sm" />
+            </td>
+            <td class="px-3 py-2">
+              <input data-field="dueDate" type="date" class="h-8 rounded border px-2 text-sm" />
+            </td>
+            <td class="px-3 py-2">
+              <label class="inline-flex items-center gap-2 text-xs">
+                <input data-field="completed" type="checkbox" class="h-4 w-4" />
+                Completada
+              </label>
+            </td>
+            <td class="px-3 py-2">
+              <div class="flex items-center gap-2">
+                <button data-action="save" class="rounded border px-3 py-1 text-xs hover:bg-gray-50">Guardar</button>
+                <button data-action="delete" class="hidden rounded border px-3 py-1 text-xs text-red-700 hover:bg-red-50">Eliminar</button>
+                <span data-field="rowMsg" class="text-xs"></span>
+              </div>
+            </td>
+          </tr>
+        </template>
+      </main>
+    </div>
+  </div>
+
+  {{> app-footer}}
+  {{> app-guard-scripts}}
+
+  <script>
+    const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+    const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
+
+    function isAdminRole() {
+      try {
+        const t = window.TaskFlowAuth.getToken();
+        const p = t ? window.TaskFlowAuth.decodeJwt(t) : null;
+        return p?.role === "admin";
+      } catch { return false; }
+    }
+
+    function toISODate(dateInput) {
+      if (!dateInput) return undefined;
+      try {
+        const d = new Date(dateInput);
+        if (isNaN(d.getTime())) return undefined;
+        // Controller expects ISO string or can accept date; store ISO
+        return d.toISOString();
+      } catch { return undefined; }
+    }
+
+    function fromISOToDateInput(iso) {
+      if (!iso) return "";
+      try {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return "";
+        // yyyy-mm-dd
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return d.getFullYear() + "-" + m + "-" + day;
+      } catch { return ""; }
+    }
+
+    async function loadTasks() {
+      const tbody = $("#tasksTbody");
+      tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-gray-500">Cargando...</td></tr>';
+      try {
+        const resp = await window.apiFetch("/tasks", { method: "GET" });
+        const tasks = resp?.data || [];
+        renderTasks(tasks);
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-red-600">Error cargando tareas: ' + (err.message || 'Error') + '</td></tr>';
+      }
+    }
+
+    function renderTasks(tasks) {
+      const tbody = $("#tasksTbody");
+      const tpl = $("#taskRowTpl");
+      tbody.innerHTML = "";
+      const admin = isAdminRole();
+
+      if (!tasks || !tasks.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-gray-500">Aún no hay tareas</td></tr>';
+        $("#listMeta").textContent = "0 resultado(s)";
+        return;
+      }
+
+      $("#listMeta").textContent = tasks.length + " resultado(s)";
+
+      tasks.forEach(t => {
+        const row = tpl.content.firstElementChild.cloneNode(true);
+
+        const fTitle = $('[data-field="title"]', row);
+        const fPriority = $('[data-field="priority"]', row);
+        const fEst = $('[data-field="estimateHours"]', row);
+        const fDue = $('[data-field="dueDate"]', row);
+        const fCompleted = $('[data-field="completed"]', row);
+        const rowMsg = $('[data-field="rowMsg"]', row);
+        const btnSave = $('[data-action="save"]', row);
+        const btnDelete = $('[data-action="delete"]', row);
+
+        fTitle.value = t.title || "";
+        fPriority.value = t.priority || "LOW";
+        fEst.value = (t.estimateHours ?? "") + "";
+        fDue.value = fromISOToDateInput(t.dueDate);
+        fCompleted.checked = !!t.completed;
+
+        if (admin) btnDelete.classList.remove("hidden");
+
+        async function save() {
+          rowMsg.textContent = "Guardando...";
+          try {
+            const body = {
+              title: fTitle.value.trim(),
+              priority: fPriority.value,
+              estimateHours: fEst.value ? Number(fEst.value) : undefined,
+              dueDate: fDue.value ? toISODate(fDue.value) : undefined,
+              completed: !!fCompleted.checked
+            };
+            await window.apiFetch("/tasks/" + (t._id || t.id), {
+              method: "PUT",
+              body: JSON.stringify(body)
+            });
+            rowMsg.textContent = "Actualizado";
+            rowMsg.className = "text-xs text-green-600";
+            setTimeout(() => rowMsg.textContent = "", 1500);
+          } catch (err) {
+            rowMsg.textContent = "Error: " + (err.message || "no se pudo actualizar");
+            rowMsg.className = "text-xs text-red-700";
+          }
+        }
+
+        btnSave.addEventListener("click", save);
+        // Guardado rápido al marcar completada
+        fCompleted.addEventListener("change", save);
+
+        btnDelete.addEventListener("click", async () => {
+          if (!confirm("¿Eliminar esta tarea?")) return;
+          rowMsg.textContent = "Eliminando...";
+          try {
+            await window.apiFetch("/tasks/" + (t._id || t.id), { method: "DELETE" });
+            row.remove();
+          } catch (err) {
+            rowMsg.textContent = "Error: " + (err.message || "no se pudo eliminar");
+          }
+        });
+
+        tbody.appendChild(row);
+      });
+    }
+
+    function setupCreateTask() {
+      const form = $("#createTaskForm");
+      const msg = $("#createMsg");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        msg.textContent = "Creando...";
+        msg.className = "ml-2 text-sm text-gray-600";
+        const title = $("#ct_title").value.trim();
+        const priority = $("#ct_priority").value;
+        const estVal = $("#ct_est").value;
+        const dueVal = $("#ct_due").value;
+
+        const body = {
+          title,
+          priority,
+          estimateHours: estVal ? Number(estVal) : undefined,
+          dueDate: dueVal ? toISODate(dueVal) : undefined
+        };
+
+        try {
+          await window.apiFetch("/tasks", {
+            method: "POST",
+            body: JSON.stringify(body)
+          });
+          msg.textContent = "Creada";
+          msg.className = "ml-2 text-sm text-green-600";
+          $("#ct_title").value = "";
+          $("#ct_priority").value = "LOW";
+          $("#ct_est").value = "";
+          $("#ct_due").value = "";
+          await loadTasks();
+        } catch (err) {
+          msg.textContent = "Error: " + (err.message || "no se pudo crear");
+          msg.className = "ml-2 text-sm text-red-600";
+        }
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      $("#btnRefresh").addEventListener("click", loadTasks);
+      setupCreateTask();
+      loadTasks();
+    });
+  </script>
+</body>
+</html>

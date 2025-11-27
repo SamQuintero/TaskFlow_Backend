@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "node . ",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.ts"
+    "dev": "nodemon --watch src --watch src/app/views --ext ts,json,hbs src/index.ts"
   },
   "author": "",
   "license": "ISC",

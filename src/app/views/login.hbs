@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ingresar | TaskFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .tf-input { @apply h-10 w-full rounded-md border px-3 text-sm outline-none; }
+    .tf-btn { @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium; }
+    .tf-btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
+    .tf-btn-outline { @apply border hover:bg-gray-50; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <header class="border-b bg-white">
+    <div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+      <a href="/" class="font-semibold">TaskFlow</a>
+      <nav class="text-sm">
+        <a class="text-blue-600 underline underline-offset-4" href="/login">Ingresar</a>
+        <span class="mx-2 text-gray-400">/</span>
+        <a class="hover:underline underline-offset-4" href="/register">Crear cuenta</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-12">
+    <div class="mx-auto max-w-md">
+      <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold tracking-tight">Bienvenido de vuelta</h1>
+        <p class="mt-2 text-sm text-gray-600">
+          Inicia sesión con tu correo y contraseña para acceder a la aplicación.
+        </p>
+      </div>
+
+      <form id="loginForm" class="space-y-4 rounded-lg border bg-white p-6 shadow-sm">
+        <div class="space-y-1">
+          <label class="text-sm text-gray-700">Correo</label>
+          <input id="email" type="email" class="tf-input border-gray-300" placeholder="usuario@ejemplo.com" required />
+        </div>
+        <div class="space-y-1">
+          <label class="text-sm text-gray-700">Contraseña</label>
+          <input id="password" type="password" class="tf-input border-gray-300" placeholder="••••••••" required />
+        </div>
+
+        <button type="submit" id="btnLogin" class="tf-btn tf-btn-primary w-full">Ingresar</button>
+
+        <p id="msg" class="mt-2 text-center text-sm text-red-600 hidden"></p>
+
+        <div class="pt-2 text-center text-sm text-gray-600">
+          ¿No tienes cuenta?
+          <a href="/register" class="text-blue-600 underline underline-offset-4">Crear cuenta</a>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <footer class="border-t bg-white">
+    <div class="mx-auto max-w-6xl px-4 py-6 text-center text-xs text-gray-500">
+      TaskFlow &middot; Uso educativo/demostrativo
+    </div>
+  </footer>
+
+  <script>
+    const TOKEN_KEY = "taskflow_token";
+
+    function setAuthToken(token) {
+      if (!token) localStorage.removeItem(TOKEN_KEY);
+      else localStorage.setItem(TOKEN_KEY, token);
+    }
+
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+
+    async function login(email, password) {
+      const res = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        let message = "Credenciales inválidas";
+        try {
+          const j = await res.json();
+          message = j.message || message;
+        } catch {}
+        throw new Error(message);
+      }
+      const data = await res.json();
+      return data; // { message, token }
+    }
+
+    const form = document.getElementById("loginForm");
+    const btn = document.getElementById("btnLogin");
+    const msg = document.getElementById("msg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.classList.add("hidden");
+      btn.disabled = true;
+      btn.textContent = "Ingresando...";
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const { token } = await login(email, password);
+        setAuthToken(token);
+        const returnTo = getQueryParam("returnTo") || "/app/dashboard";
+        window.location.href = returnTo;
+      } catch (err) {
+        msg.textContent = err.message || "No fue posible iniciar sesión";
+        msg.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Ingresar";
+      }
+    });
+  </script>
+</body>
+</html>

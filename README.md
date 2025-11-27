@@ -1,30 +1,35 @@
-# TaskFlow Backend (API)
+# TaskFlow Backend (API + Vistas HBS)
 
 ## Descripción
-API en TypeScript/Express para el proyecto “TaskFlow”. Incluye autenticación con JWT, CRUD de usuarios/tareas/metas, endpoints de calendario (dummy), subida y descarga de archivos a AWS S3, y documentación interactiva con Swagger.
+Backend en TypeScript/Express para el proyecto “TaskFlow”. Incluye:
+- API REST con autenticación JWT (login/signup), CRUD de usuarios, tareas y metas
+- Endpoints de calendario (dummy)
+- Subida/descarga de archivos a AWS S3
+- Documentación Swagger
+- Vistas SSR con Handlebars (HBS) que replican el estilo de TaskFlowUI (layouts, navegación, guards y consumo de API con Bearer)
 
-Importante: la mayoría de las rutas están protegidas con Authorization: Bearer <JWT>. Primero debes registrarte e iniciar sesión para obtener un token.
+Importante: la mayoría de las rutas de la API están protegidas con Authorization: Bearer <JWT>. Primero debes registrarte e iniciar sesión para obtener un token.
 
 ## Requisitos
 - Node.js 18+ (recomendado)
 - npm 9+
 - Conectividad a:
-  - MongoDB Atlas (MONGO_URL)
+  - MongoDB (MONGO_URL)
   - AWS S3 (credenciales y bucket)
 - Archivo `.env` válido
 
 ## Variables de entorno
-Se requieren las siguientes variables. La app arranca el servidor únicamente si logra conectar a MongoDB; además, el módulo S3 valida sus variables en el arranque y lanza error si faltan.
+La app arranca el servidor tras conectar a MongoDB. El módulo S3 valida sus variables al cargar.
 
-- PORT: Puerto de la API (por defecto 3000 si no se define)
-- MONGO_URL: URI de conexión a MongoDB Atlas
+- PORT: Puerto del servidor (por defecto 3000)
+- MONGO_URL: URI de conexión a MongoDB
 - JWT_SECRET: Secreto para firmar/validar JWT
 - S3_ACCESS_KEY: Access Key de AWS
 - S3_SECRET_KEY: Secret Key de AWS
 - S3_REGION: Región (ej. us-east-2)
 - S3_BUCKET_NAME: Nombre del bucket
 
-Ejemplo `.env` (no uses credenciales reales en el repo):
+Ejemplo `.env`:
 ```
 PORT=3000
 MONGO_URL="mongodb+srv://<user>:<pass>@<cluster>/<db>?retryWrites=true&w=majority"
@@ -36,7 +41,7 @@ S3_BUCKET_NAME="taskflow-archivos-bucket"
 ```
 
 ## Instalación
-1) Clonar el repositorio
+1) Clonar el repo y entrar al directorio
 ```
 git clone <URL_DEL_REPO>
 cd TaskFlow_Backend
@@ -54,10 +59,7 @@ npm install
 ```
 npm run dev
 ```
-Si tu entorno no corre `.ts` directamente, usa:
-```
-npx ts-node src/index.ts
-```
+Este script observa cambios en `src` y `src/app/views` (extensiones ts,json,hbs) para recargar el servidor y (re)registrar parciales HBS automáticamente.
 
 - Producción (compilado a `dist`):
 ```
@@ -68,71 +70,106 @@ npm start
 Mensajes esperados al iniciar:
 - “Ya se conecto!” (Mongo conectado)
 - “HTTP + Socket.IO server listening on port <PORT>”
+- “HBS views: …/src/app/views”
+- “HBS partials: …/src/app/views/partials”
+- “HBS manual partials registered” (fallback de registro de parciales)
 
 Base URL local por defecto: `http://localhost:3000`
 
 - Health: `GET /` → "api works"
 - Swagger UI: `GET /swagger`
 
-## Autenticación y Autorización
+## UI SSR (Handlebars)  (layout con Navbar/Sidebar/Footer, guards de sesión/roles en cliente y consumo de la API con fetch nativo).
+
+Rutas SSR disponibles:
+- Públicas:
+  - `GET /login` → Login (guarda JWT en localStorage y redirige a /app/dashboard)
+  - `GET /register` → Registro (crea usuario, login automático y redirige)
+- Autenticadas (requieren JWT en localStorage):
+  - `GET /app/dashboard` → Dashboard (resumen mock, accesos rápidos)
+  - `GET /app/users` → Administración/Usuarios
+    - Lista usuarios (GET /users)
+    - Cambiar rol (PUT /users/:id)
+    - Crear usuario (POST /users) y Eliminar (DELETE /users/:id) — UI visible solo si rol=admin (además de middleware del servidor)
+  - `GET /app/tasks` → Tareas (CRUD vía /tasks)
+    - Listado (GET /tasks)
+    - Crear (POST /tasks)
+    - Editar (PUT /tasks/:id)
+    - Eliminar (DELETE /tasks/:id) — solo admin (UI + server)
+  - `GET /app/goals` → Metas (CRUD vía /goals)
+  - `GET /app/calendar` → Calendario (dummy)
+    - Eventos (GET /calendar/events)
+    - “Sincronizar” (POST /calendar/sync)
+  - `GET /app/files` → Archivos (uploader a S3)
+    - Subir (POST /files/upload) con FormData
+- Vista simple adicional para archivos:
+  - `GET /files/view` → Página HBS sencilla para subir un archivo (útil para pruebas rápidas)
+
+Estructura de vistas:
+- `src/app/views/`:
+  - Páginas: `login.hbs`, `register.hbs`, `app-dashboard.hbs`, `app-users.hbs`, `app-tasks.hbs`, `app-goals.hbs`, `app-calendar.hbs`, `app-files.hbs`, `upload.hbs` (simple)
+  - Parciales: `partials/app-navbar.hbs`, `partials/app-sidebar.hbs`, `partials/app-footer.hbs`, `partials/app-guard-scripts.hbs`
+
+Guard de cliente y fetch autenticado:
+- `app-guard-scripts.hbs`:
+  - Protege todas las rutas `/app/*`: si no hay token en localStorage → redirige a `/login?returnTo=...`
+  - Decodifica el JWT para mostrar el rol en UI (badge de Navbar, texto en Sidebar y visibilidad del link de Admin)
+  - Expone `window.apiFetch(url, options)` que adjunta `Authorization: Bearer <token>` automáticamente
+
+## Autenticación y Autorización (API)
 - Login/Signup generan y usan JWT (firmado con `JWT_SECRET`).
 - Rutas protegidas exigen header:
   ```
   Authorization: Bearer <tu_token>
   ```
-- Control de roles:
+- Control de roles (middleware):
   - `authorizeRoles('admin')` requerido en:
     - Users: crear (`POST /users`) y eliminar (`DELETE /users/:id`)
     - Tasks: eliminar (`DELETE /tasks/:id`)
     - Goals: eliminar (`DELETE /goals/:id`)
 
-## Endpoints
+## Endpoints principales
 
 ### Auth (público)
-- `POST /auth/signup`
-  - Body JSON: `{ name, email, password, role? (user|admin) }`
-- `POST /auth/login`
-  - Body JSON: `{ email, password }`
-  - Respuesta: `{ token, ... }` (usa este token para el resto de endpoints)
+- `POST /auth/signup` — `{ name, email, password, role? (user|admin) }`
+- `POST /auth/login` — `{ email, password }` → `{ token, ... }`
 
 ### Users (protegido)
-- `GET /users` — listar
-- `GET /users/:id` — obtener por id
-- `POST /users` — crear (admin)
-- `PUT /users/:id` — actualizar
-- `DELETE /users/:id` — eliminar (admin)
+- `GET /users`
+- `GET /users/:id`
+- `POST /users` (admin)
+- `PUT /users/:id`
+- `DELETE /users/:id` (admin)
 
 ### Tasks (protegido)
-- `GET /tasks` — listar
-- `GET /tasks/:id` — obtener por id
-- `POST /tasks` — crear
-- `PUT /tasks/:id` — actualizar
-- `DELETE /tasks/:id` — eliminar (admin)
+- `GET /tasks`
+- `GET /tasks/:id`
+- `POST /tasks`
+- `PUT /tasks/:id`
+- `DELETE /tasks/:id` (admin)
 
 ### Goals (protegido)
-- `GET /goals` — listar
-- `GET /goals/:id` — obtener por id
-- `POST /goals` — crear
-- `PUT /goals/:id` — actualizar
-- `DELETE /goals/:id` — eliminar (admin)
+- `GET /goals`
+- `GET /goals/:id`
+- `POST /goals`
+- `PUT /goals/:id`
+- `DELETE /goals/:id` (admin)
 
 ### Calendar (protegido, dummy)
 - `POST /calendar/sync`
 - `GET /calendar/events`
 
-### Files (AWS S3) 
+### Files (AWS S3)
 - `GET /files/view` — vista HBS simple (pública) para probar upload
 - `POST /files/upload` (protegido)
-  - Form-data: key `file` (tipo `File`), soporta: jpg, jpeg, png, gif, pdf; máx 5MB
-  - Sube a S3 y guarda metadatos en Mongo (dueño = usuario autenticado)
-  - Respuesta incluye `s3Key` y `location`
+  - Form-data: key `file` (jpg, jpeg, png, gif, pdf; máx 5MB)
+  - Sube a S3 y guarda metadatos en Mongo
 - `GET /files/:key` (protegido)
-  - Devuelve el contenido desde S3 por streaming
-  - Solo dueño o rol `admin` pueden acceder
+  - Devuelve contenido de S3 por streaming (owner o admin)
 
 ## Cómo probar rápidamente
 
-1) Registrar usuario (puede ser admin):
+1) Registrar usuario (opcionalmente admin):
 ```
 POST http://localhost:3000/auth/signup
 Content-Type: application/json
@@ -155,17 +192,17 @@ Content-Type: application/json
   "password": "secret"
 }
 ```
-Guarda el valor `token` de la respuesta.
 
-3) Autorizar en Swagger:
-- Ir a `http://localhost:3000/swagger`
-- Click en “Authorize”
-- Pegar el token (sin el prefijo “Bearer ”). Swagger aplica el esquema Bearer.
+3) UI SSR:
+- Ir a `http://localhost:3000/login` → iniciar sesión → redirige a `/app/dashboard`
+- Navegar a `/app/users`, `/app/tasks`, `/app/goals`, `/app/calendar`, `/app/files`
+- Si no hay token y visitas `/app/*`, el guard te enviará a `/login?returnTo=/app/...`
 
-4) Probar endpoints protegidos (Swagger o Postman):
-- Agregar header `Authorization: Bearer <token>` en cada request
+4) Swagger:
+- `http://localhost:3000/swagger`
+- “Authorize” → pegar el token (sin “Bearer ”)
 
-Ejemplos (curl):
+5) curl de ejemplo (API):
 - Listar usuarios:
 ```
 curl "http://localhost:3000/users" -H "Authorization: Bearer <TOKEN>"
@@ -180,116 +217,34 @@ curl -X POST "http://localhost:3000/tasks" \
 - Subir archivo a S3:
 ```
 curl -X POST "http://localhost:3000/files/upload" \
-  -H "Authorization: Bearer <TOKEN>" \
+  -H "Authorization: Bearer <TOKEN)" \
   -F "file=@/ruta/a/archivo.png"
-```
-- Descargar archivo por key (si eres owner o admin):
-```
-curl "http://localhost:3000/files/<S3_KEY>" \
-  -H "Authorization: Bearer <TOKEN>" \
-  -o salida.bin
 ```
 
 ## Tiempo real (WebSockets)
+Integración con Socket.IO en el mismo servidor HTTP, con autenticación JWT en handshake. Se emiten eventos ante operaciones REST (tasks/goals/files) y hay una vista de prueba:
 
-Este proyecto integra Socket.IO para comunicación en tiempo real (servidor ↔ cliente) con autenticación JWT en el handshake, rooms por usuario y soporte para rooms por proyecto.
+- Vista demo: `GET /socket-demo`
+  - Pega tu JWT y conéctate
+  - Envía “ping” y recibe “pong”
+  - Observa eventos `task:*`, `goal:*`, `file:*` al usar los endpoints
 
-- Servidor: Socket.IO se inicializa sobre el HTTP server de Express. No requiere pasos adicionales para arrancar más allá de `npm run dev` (o build + start en prod).
-- Cliente: se sirve automáticamente el script en `/socket.io/socket.io.js`.
+Formas de enviar JWT al conectar:
+- Header: `Authorization: Bearer <TOKEN>`
+- query `?token=<TOKEN>` o `auth: { token }` en el cliente
 
-### Autenticación (handshake)
-El servidor valida tu JWT durante el handshake de Socket.IO. Puedes enviar el token de cualquiera de estas formas:
-- En headers: `Authorization: Bearer <TOKEN>`
-- En query: `?token=<TOKEN>`
-- En auth payload del cliente: `{ auth: { token: "<TOKEN>" } }`
+## Troubleshooting (HBS/Partials)
+- “The partial X could not be found”:
+  - Verifica que el archivo exista en `src/app/views/partials` y que el nombre coincida con el usado en `{{> X}}`
+  - En desarrollo, nodemon recarga .hbs y (re)registra parciales automáticamente
+  - El servidor imprime rutas de vistas/partials y registra un fallback manual de parciales en `src/index.ts`
 
-El payload debe contener `id` y `role` (según lo generado por el login). El servidor unirá al socket a la room personal `user:<id>` y emitirá presencia.
-
-### Rooms
-- Room personal por usuario: `user:<userId>`
-- Rooms por proyecto (opcional): disponibles vía API Socket.IO (evento `join:projects`), no incluidas en la vista de demo.
-- Hooks listos para rooms por tarea si se requiere en el futuro.
-
-### Eventos Servidor → Cliente (emitidos por el backend)
-- `presence:user:online` ({ userId })
-- `presence:user:offline` ({ userId })
-- `task:created` (payload libre)
-- `task:updated` (payload libre)
-- `task:deleted` (payload libre)
-- `goal:created` (payload libre)
-- `goal:updated` (payload libre)
-- `goal:deleted` (payload libre)
-- `file:uploaded` (payload libre)
-- `file:deleted` (payload libre) [placeholder si implementas eliminación de archivos]
-- `pong` ({ ts })
-
-Los controladores REST emiten:
-- Tasks: `create/update/delete` → publicadores (`publishTaskCreated/Updated/Deleted`)
-- Goals: `create/update/delete` → publicadores
-- Files: `upload` → `publishFileUploaded` (delete opcional)
-
-### Eventos Cliente → Servidor
-- `ping` ({ ts: number }) — el servidor responde `pong` con el mismo timestamp.
-- Opcionales (no visibles en la vista demo): `join:projects` ({ projectIds: string[] }), `typing:task` ({ taskId: string }).
-
-### Vista de prueba
-- `GET /socket-demo` — Página HBS con UI mínima:
-  1. Pega tu JWT y haz click en “Conectar”
-  2. Presiona “ping” y verifica el “pong”
-  3. Observa en los logs los eventos `presence:*`, `task:*`, `goal:*`, `file:*` al usar los endpoints REST
-- El cliente usa `/socket.io/socket.io.js` y se autentica con header `Authorization: Bearer <TOKEN>`.
-
-### Pruebas rápidas de eventos
-1) Abre `http://localhost:3000/socket-demo`, pega tu token y conecta.
-2) En otra terminal, crea una tarea por REST:
-```
-curl -X POST "http://localhost:3000/tasks" \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Tarea Realtime"}'
-```
-3) Observa en la vista que llega `task:created` con el payload.
-
-Para Goals y Files:
-- Crea/actualiza/elimina metas vía `/goals` y observa `goal:*`.
-- Sube un archivo vía `/files/upload` y observa `file:uploaded`.
-
-### Ejemplo de cliente HTML simple
-```html
-<script src="/socket.io/socket.io.js"></script>
-<script>
-  const token = "<TOKEN>";
-  const socket = io("/", {
-    extraHeaders: { Authorization: `Bearer ${token}` }
-    // o bien: auth: { token }, o query: { token }
-  });
-
-  socket.on("connect", () => console.log("connected", socket.id));
-  socket.on("task:created", (data) => console.log("task:created", data));
-  socket.emit("ping", { ts: Date.now() });
-  socket.on("pong", (data) => console.log("pong", data));
-</script>
-```
-
-### Seguridad y notas
-- Autenticación con JWT en el handshake. No expongas datos sensibles en los eventos.
-- Rooms por usuario: emite a `user:<id>` para notificaciones personales.
-- CORS: ajusta la opción `cors.origin` en `src/realtime/index.ts` si el frontend corre en otro origen.
-- Proxy/HTTPS: si hay proxy inverso, habilita `app.set('trust proxy', 1)` y configura correctamente el servidor para WebSockets.
-- Namespaces: puedes aislar la capa en un namespace (p.ej. `/realtime`) si se requiere.
-- Rate limiting de eventos (opcional) y logging de conexiones pueden añadirse.
-
-### Problemas comunes
-- “UNAUTHORIZED” al conectar: el token no se envía o es inválido; revisa el header/query/auth del cliente.
-- No veo `presence:user:online`: verifica que el handshake pasó y que el cliente no reconecte con otro token.
-- No llegan eventos `task:*`: confirma que el endpoint REST fue exitoso y que `publishers.ts` esté importado en los controladores correspondientes.
-
-## Notas y troubleshooting
-- Si el servidor “no arranca”: valida `MONGO_URL` y tu red; el `app.listen` ocurre solo tras conectar a MongoDB.
-- S3: si faltan variables o el bucket/credenciales son inválidas, el módulo lanzará error al cargar.
-- CORS: no está configurado explícitamente; para pruebas locales usa Postman o Swagger.
-- Puerto: por defecto `3000` (o el definido en `.env`).
-- Express 5 + TypeScript: si `npm run dev` no levanta `.ts` directamente, usa `npx ts-node src/index.ts` o corre en modo producción tras compilar.
+## Notas y seguridad
+- JWT en localStorage (UI SSR) por simplicidad. En producción, considerar cookies httpOnly.
+- Endpoints protegidos validan JWT (Authorization: Bearer).
+- Agregar rate limiting/logs si necesitas endurecer el servicio.
+- CORS no está configurado explícitamente (Swagger/Postman locales funcionan sin proxy).
+- AWS SDK v2 muestra aviso de mantenimiento; recomendable migrar a v3 cuando sea posible.
 
 ## Tecnologías
 - Node.js + Express 5 (TypeScript)
@@ -297,4 +252,5 @@ Para Goals y Files:
 - JWT (bcrypt para hashing)
 - Multer + AWS S3 (aws-sdk v2)
 - Swagger (swagger-jsdoc + swagger-ui-express)
-- dotenv, hbs
+- Handlebars (hbs) para vistas SSR
+- Socket.IO

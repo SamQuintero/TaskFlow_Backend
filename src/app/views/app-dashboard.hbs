@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard | TaskFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  {{> app-navbar}}
+
+  <div class="mx-auto max-w-6xl px-4">
+    <div class="grid min-h-[calc(100vh-56px-56px)] grid-cols-1 md:grid-cols-[240px_1fr]">
+      {{> app-sidebar}}
+
+      <main class="flex min-h-full flex-col p-4 md:p-6">
+        <h1 class="mb-4 text-2xl font-bold tracking-tight">Dashboard</h1>
+
+        <!-- Summary cards (mock visual) -->
+        <section class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="rounded-lg border bg-white p-4">
+            <div class="text-xs text-gray-500">Tareas</div>
+            <div class="mt-1 text-2xl font-semibold">—</div>
+          </div>
+          <div class="rounded-lg border bg-white p-4">
+            <div class="text-xs text-gray-500">Metas</div>
+            <div class="mt-1 text-2xl font-semibold">—</div>
+          </div>
+          <div class="rounded-lg border bg-white p-4">
+            <div class="text-xs text-gray-500">Próximos eventos</div>
+            <div class="mt-1 text-2xl font-semibold">—</div>
+          </div>
+          <div class="rounded-lg border bg-white p-4">
+            <div class="text-xs text-gray-500">Archivos</div>
+            <div class="mt-1 text-2xl font-semibold">—</div>
+          </div>
+        </section>
+
+        <!-- Quick links -->
+        <section class="grid gap-4 md:grid-cols-2">
+          <div class="rounded-lg border bg-white p-6">
+            <h2 class="mb-2 text-lg font-semibold">Accesos rápidos</h2>
+            <ul class="text-sm list-disc pl-5 space-y-1">
+              <li><a class="text-blue-600 underline underline-offset-2" href="/app/tasks">Gestionar tareas</a></li>
+              <li><a class="text-blue-600 underline underline-offset-2" href="/app/goals">Gestionar metas</a></li>
+              <li><a class="text-blue-600 underline underline-offset-2" href="/app/calendar">Ver calendario</a></li>
+              <li><a class="text-blue-600 underline underline-offset-2" href="/app/files">Subir archivos</a></li>
+              <li><a class="text-blue-600 underline underline-offset-2" href="/socket-demo">Socket demo</a></li>
+            </ul>
+          </div>
+          <div class="rounded-lg border bg-white p-6">
+            <h2 class="mb-2 text-lg font-semibold">Actividad reciente (demo)</h2>
+            <p class="text-sm text-gray-600">
+              Integra un feed en tiempo real escuchando eventos del servidor Socket.IO
+              (ver /socket-demo y publishers en el backend). 
+            </p>
+          </div>
+        </section>
+
+        <div class="mt-auto"></div>
+      </main>
+    </div>
+  </div>
+
+  {{> app-footer}}
+  {{> app-guard-scripts}}
+</body>
+</html>

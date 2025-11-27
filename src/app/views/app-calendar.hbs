@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calendario | TaskFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  {{> app-navbar}}
+
+  <div class="mx-auto max-w-6xl px-4">
+    <div class="grid min-h-[calc(100vh-56px-56px)] grid-cols-1 md:grid-cols-[240px_1fr]">
+      {{> app-sidebar}}
+
+      <main class="flex min-h-full flex-col p-4 md:p-6">
+        <div class="mb-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+          <h1 class="text-2xl font-bold tracking-tight">Calendario</h1>
+          <div class="flex items-center gap-2">
+            <button id="btnSync" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Sincronizar</button>
+            <button id="btnRefresh" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Refrescar</button>
+          </div>
+        </div>
+
+        <!-- Toolbar de vistas (mock visual) -->
+        <div class="mb-4 inline-flex items-center gap-1 rounded border bg-white p-1">
+          <button data-view="month" class="view-btn rounded px-3 py-1 text-sm hover:bg-gray-50">Mes</button>
+          <button data-view="week" class="view-btn rounded px-3 py-1 text-sm hover:bg-gray-50">Semana</button>
+          <button data-view="day" class="view-btn rounded px-3 py-1 text-sm hover:bg-gray-50">Día</button>
+        </div>
+        <div id="viewInfo" class="mb-4 text-xs text-gray-500">Vista actual: Mes</div>
+
+        <!-- Tabla de eventos -->
+        <section class="rounded-lg border bg-white">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-left">
+                <tr>
+                  <th class="px-3 py-2 font-medium">Título</th>
+                  <th class="px-3 py-2 font-medium">Inicio</th>
+                  <th class="px-3 py-2 font-medium">Fin</th>
+                </tr>
+              </thead>
+              <tbody id="eventsTbody">
+                <tr>
+                  <td colspan="3" class="px-3 py-6 text-center text-gray-500">Cargando...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="mt-2 text-xs text-gray-500" id="listMeta"></div>
+
+        <template id="eventRowTpl">
+          <tr class="border-t">
+            <td class="px-3 py-2"><span data-field="title"></span></td>
+            <td class="px-3 py-2"><span data-field="start"></span></td>
+            <td class="px-3 py-2"><span data-field="end"></span></td>
+          </tr>
+        </template>
+      </main>
+    </div>
+  </div>
+
+  {{> app-footer}}
+  {{> app-guard-scripts}}
+
+  <script>
+    const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+
+    function fmt(dateIso) {
+      if (!dateIso) return "-";
+      try {
+        const d = new Date(dateIso);
+        if (isNaN(d.getTime())) return "-";
+        return d.toLocaleString();
+      } catch { return "-"; }
+    }
+
+    async function loadEvents() {
+      const tbody = $("#eventsTbody");
+      tbody.innerHTML = '<tr><td colspan="3" class="px-3 py-6 text-center text-gray-500">Cargando...</td></tr>';
+      try {
+        const resp = await window.apiFetch("/calendar/events", { method: "GET" });
+        const events = resp?.data || [];
+        renderEvents(events);
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="3" class="px-3 py-6 text-center text-red-600">Error cargando eventos: ' + (err.message || 'Error') + '</td></tr>';
+      }
+    }
+
+    function renderEvents(events) {
+      const tbody = $("#eventsTbody");
+      const tpl = $("#eventRowTpl");
+      tbody.innerHTML = "";
+
+      if (!events || !events.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="px-3 py-6 text-center text-gray-500">Aún no hay eventos</td></tr>';
+        $("#listMeta").textContent = "0 evento(s)";
+        return;
+      }
+
+      $("#listMeta").textContent = events.length + " evento(s)";
+
+      events.forEach(ev => {
+        const row = tpl.content.firstElementChild.cloneNode(true);
+        $('[data-field="title"]', row).textContent = ev.title || "-";
+        $('[data-field="start"]', row).textContent = fmt(ev.start);
+        $('[data-field="end"]', row).textContent = fmt(ev.end);
+        tbody.appendChild(row);
+      });
+    }
+
+    async function syncCalendar() {
+      const btn = $("#btnSync");
+      const prev = btn.textContent;
+      btn.textContent = "Sincronizando...";
+      btn.disabled = true;
+      try {
+        await window.apiFetch("/calendar/sync", { method: "POST" });
+      } catch (err) {
+        // Soft error UI
+        alert("No se pudo sincronizar: " + (err.message || "Error"));
+      } finally {
+        btn.textContent = prev;
+        btn.disabled = false;
+      }
+      await loadEvents();
+    }
+
+    function setupToolbar() {
+      const info = $("#viewInfo");
+      document.querySelectorAll(".view-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const v = btn.getAttribute("data-view");
+          info.textContent = "Vista actual: " + (v === "month" ? "Mes" : v === "week" ? "Semana" : "Día");
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      $("#btnRefresh").addEventListener("click", loadEvents);
+      $("#btnSync").addEventListener("click", syncCalendar);
+      setupToolbar();
+      loadEvents();
+    });
+  </script>
+</body>
+</html>

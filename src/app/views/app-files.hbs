@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Archivos | TaskFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  {{> app-navbar}}
+
+  <div class="mx-auto max-w-6xl px-4">
+    <div class="grid min-h-[calc(100vh-56px-56px)] grid-cols-1 md:grid-cols-[240px_1fr]">
+      {{> app-sidebar}}
+
+      <main class="flex min-h-full flex-col p-4 md:p-6">
+        <div class="mb-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+          <h1 class="text-2xl font-bold tracking-tight">Archivos</h1>
+          <div class="flex items-center gap-2">
+            <a href="/files/view" target="_blank" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Abrir vista simple</a>
+          </div>
+        </div>
+
+        <!-- Uploader -->
+        <section class="rounded-lg border bg-white p-6">
+          <h2 class="mb-3 text-lg font-semibold">Subir a S3</h2>
+
+          <div id="dropZone" class="mb-4 cursor-pointer rounded-lg border-2 border-dashed border-blue-300 p-6 text-center hover:bg-blue-50">
+            <p class="text-gray-600">Arrastra tu archivo aquí</p>
+            <p class="text-xs text-gray-400">- o -</p>
+            <button id="selectBtn" class="mt-2 text-sm font-semibold text-blue-600">Seleccionar archivo</button>
+            <input id="fileInput" type="file" class="hidden" />
+            <p id="fileName" class="mt-2 text-sm font-bold text-gray-700"></p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="btnUpload" class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Subir</button>
+            <span id="msg" class="text-sm"></span>
+          </div>
+
+          <p class="mt-3 text-xs text-gray-500">
+            Nota: Se requiere JWT en Authorization Bearer. Ya se enviará automáticamente desde el navegador si iniciaste sesión.
+          </p>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  {{> app-footer}}
+  {{> app-guard-scripts}}
+
+  <script>
+    const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+
+    const dropZone = $("#dropZone");
+    const fileInput = $("#fileInput");
+    const selectBtn = $("#selectBtn");
+    const fileNameDisplay = $("#fileName");
+    const btnUpload = $("#btnUpload");
+    const msg = $("#msg");
+
+    selectBtn.addEventListener("click", () => fileInput.click());
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("bg-blue-50");
+    });
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.classList.remove("bg-blue-50");
+    });
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("bg-blue-50");
+      if (e.dataTransfer.files.length > 0) {
+        fileInput.files = e.dataTransfer.files;
+        fileNameDisplay.textContent = fileInput.files[0].name;
+      }
+    });
+
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files.length > 0) {
+        fileNameDisplay.textContent = fileInput.files[0].name;
+      } else {
+        fileNameDisplay.textContent = "";
+      }
+    });
+
+    async function uploadFile() {
+      const token = window.TaskFlowAuth.getToken();
+      if (!token) {
+        alert("Necesitas iniciar sesión");
+        window.location.href = "/login?returnTo=" + encodeURIComponent("/app/files");
+        return;
+      }
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("Selecciona un archivo");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      msg.textContent = "Subiendo...";
+      msg.className = "text-sm text-blue-600";
+      btnUpload.disabled = true;
+
+      try {
+        const res = await fetch("/files/upload", {
+          method: "POST",
+          headers: { Authorization: "Bearer " + token },
+          body: formData
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || "No se pudo subir");
+        }
+        msg.textContent = "✅ Subida exitosa";
+        msg.className = "text-sm text-green-600";
+        fileInput.value = "";
+        fileNameDisplay.textContent = "";
+      } catch (err) {
+        msg.textContent = "❌ Error: " + (err.message || "No se pudo subir");
+        msg.className = "text-sm text-red-700";
+      } finally {
+        btnUpload.disabled = false;
+      }
+    }
+
+    btnUpload.addEventListener("click", uploadFile);
+  </script>
+</body>
+</html>

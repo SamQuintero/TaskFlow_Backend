@@ -1,0 +1,40 @@
+<aside class="hidden border-r bg-gray-50 md:block">
+  <nav class="flex h-[calc(100vh-56px)] flex-col p-3">
+    <div class="mb-2 text-xs font-semibold uppercase text-gray-500">Menú</div>
+    <a href="/app/dashboard" class="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</a>
+    <a href="/app/tasks" class="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Tareas</a>
+    <a href="/app/goals" class="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Metas</a>
+    <a href="/app/calendar" class="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Calendario</a>
+    <a href="/app/files" class="block rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Archivos</a>
+    <a id="adminUsersLink" href="/app/users" class="mt-2 hidden rounded-md bg-gray-100 px-3 py-2 text-sm text-gray-800">Administración / Usuarios</a>
+
+    <div class="mt-auto border-t pt-3 text-xs text-gray-500">
+      <div id="sidebarRole">Rol: visitante</div>
+    </div>
+  </nav>
+</aside>
+
+<script>
+  (function () {
+    const TOKEN_KEY = "taskflow_token";
+    function getToken() { try { return localStorage.getItem(TOKEN_KEY); } catch { return null; } }
+    function decodeJwt(token) {
+      try { const p = token.split('.')[1]; return JSON.parse(atob(p.replace(/-/g,'+').replace(/_/g,'/'))); } catch { return null; }
+    }
+    const token = getToken();
+    const payload = token ? decodeJwt(token) : null;
+    const role = payload?.role;
+    const badge = document.getElementById("userRoleBadge");
+    const roleEl = document.getElementById("sidebarRole");
+    if (badge) {
+      if (role) { badge.textContent = role; badge.classList.remove("hidden"); }
+    }
+    if (roleEl) roleEl.textContent = "Rol: " + (role || "visitante");
+
+    const adminLink = document.getElementById("adminUsersLink");
+    if (adminLink) {
+      if (role === "admin") adminLink.classList.remove("hidden");
+      else adminLink.classList.add("hidden");
+    }
+  })();
+</script>
