@@ -3,6 +3,9 @@ import { UserModel } from "../models/users";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { authorizeRoles } from "../middelwares/auth";
+import crypto from "crypto";
+import { sendVerificationEmail } from "./mailer";
+
 
 export const signup = async (req: Request, res: Response) => {
   try {
@@ -12,9 +15,11 @@ export const signup = async (req: Request, res: Response) => {
     if (userExists) return res.status(400).json({ message: "Email already registered" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = new UserModel({ name, email, password: hashedPassword ,role});
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const user = new UserModel({ name, email, password: hashedPassword ,role, verificationToken});
     await user.save();
+
+    await sendVerificationEmail(email, verificationToken, name);
 
     res.status(201).json({ message: "User created successfully", user });
   } catch (error) {

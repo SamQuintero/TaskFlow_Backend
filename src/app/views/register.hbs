@@ -129,10 +129,10 @@
 
       try {
         await signup(name, email, password);
-        const { token } = await login(email, password);
-        setAuthToken(token);
-        const returnTo = getQueryParam("returnTo") || "/app/dashboard";
-        window.location.href = returnTo;
+
+         msg.textContent = "Tu cuenta fue creada. Revisa tu correo para verificarla.";
+         msg.classList.remove("hidden");
+          form.reset();
       } catch (err) {
         msg.textContent = err.message || "No fue posible crear la cuenta";
         msg.classList.remove("hidden");
