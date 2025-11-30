@@ -1,6 +1,8 @@
 import { Router } from "express";
+import passport from "passport";
+import jwt from "jsonwebtoken";
 import { login, signup} from "../controllers/auth";
-import { authMiddleware } from "../middelwares/auth";
+import {UserModel} from "../models/users";
 
 const router = Router();
 
@@ -63,5 +65,71 @@ router.post('/login', login);
  *         description: OK (sin cuerpo)
  */
 router.post('/signup', signup);
+
+// iniciar login con Google
+router.get(
+  "/login/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+// callback
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  async (req: any, res) => {
+        try {
+      const profile = req.user;
+
+      const email = profile.emails[0].value;
+      const name = profile.displayName;
+      const googleId = profile.id;
+      const avatar = profile.photos?.[0]?.value;
+
+      let user = await UserModel.findOne({ email });
+
+      if (!user) {
+        user = await UserModel.create({
+          email,
+          name,
+          googleId,
+          avatar,
+          password: null, 
+        });
+      }
+
+      const token = jwt.sign(
+        {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+        },
+        process.env.JWT_SECRET!,
+        { expiresIn: "7d" }
+      );
+
+      res.redirect('/app/dashboard');
+    } catch (error) {
+      console.error(error);
+      res.redirect("/login?error=google-auth");
+    }
+  }
+);
+
+router.get("/verify", async (req, res) => {
+  const token = req.query.token as string;
+
+  if (!token) return res.status(400).send("Token inválido");
+
+  const user = await UserModel.findOne({ verificationToken: token });
+
+  if (!user) return res.status(400).send("Token no válido o expirado");
+
+  user.verified = true;
+
+  await user.save();
+
+
+  res.redirect('/app/dashboard');
+});
 
 export default router;

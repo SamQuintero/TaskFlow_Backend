@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Verifica tu cuenta | TaskFlow</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 0;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #1e3a8a;
+      margin-bottom: 20px;
+    }
+
+    p {
+      color: #444;
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    a.verify-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 20px;
+      background: #2563eb;
+      color: white !important;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 6px;
+    }
+
+    a.verify-btn:hover {
+      background: #1e40af;
+    }
+
+    .footer {
+      margin-top: 30px;
+      color: #999;
+      font-size: 13px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Verifica tu cuenta</h2>
+
+    <p>Hola {{name}},</p>
+
+    <p>
+      Gracias por registrarte en <strong>TaskFlow</strong>. Para activar tu cuenta,
+      por favor confirma tu correo electrónico dando clic en el siguiente botón:
+    </p>
+
+    <p style="text-align: center;">
+      <a href="{{verifyUrl}}" class="verify-btn">Verificar mi cuenta</a>
+    </p>
+
+    <p>
+      Si no creaste una cuenta en TaskFlow, puedes ignorar este mensaje.
+    </p>
+
+    <div class="footer">
+      TaskFlow · Correo automático, no respondas a este mensaje.
+    </div>
+  </div>
+</body>
+</html>

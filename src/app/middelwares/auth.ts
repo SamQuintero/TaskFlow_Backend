@@ -2,13 +2,13 @@ import { Request, Response , NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { IUser } from "../interfaces/user";
 
-declare global {
+/*declare global {
     namespace Express {
         interface Request {
             user?: IUser;
         }
     }
-}
+}*/
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
