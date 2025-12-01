@@ -24,4 +24,12 @@ async function setupMailer() {
   return mailer;
 }
 
-export default setupMailer();
+const mailerPromise =
+  process.env.NODE_ENV === "test"
+    ? Promise.resolve({
+        // Dummy transporter for tests
+        sendMail: async (_opts: any) => ({ accepted: [], rejected: [] }),
+      } as any)
+    : setupMailer();
+
+export default mailerPromise;

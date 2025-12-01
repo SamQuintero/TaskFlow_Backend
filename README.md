@@ -7,6 +7,9 @@ Backend en TypeScript/Express para el proyecto “TaskFlow”. Incluye:
 - Subida/descarga de archivos a AWS S3
 - Documentación Swagger
 - Vistas SSR con Handlebars (HBS) que replican el estilo de TaskFlowUI (layouts, navegación, guards y consumo de API con Bearer)
+- Tiempo real con Socket.IO (autenticación por JWT en el handshake)
+- Validación de entrada con Zod
+- Pruebas automatizadas con Jest + ts-jest + Supertest
 
 Importante: la mayoría de las rutas de la API están protegidas con Authorization: Bearer <JWT>. Primero debes registrarte e iniciar sesión para obtener un token.
 
@@ -19,25 +22,50 @@ Importante: la mayoría de las rutas de la API están protegidas con Authorizati
 - Archivo `.env` válido
 
 ## Variables de entorno
-La app arranca el servidor tras conectar a MongoDB. El módulo S3 valida sus variables al cargar.
+La app arranca el servidor tras conectar a MongoDB. El módulo S3 valida sus variables al cargar. El flujo OAuth de Google y el mailer también requieren variables.
 
+Core:
 - PORT: Puerto del servidor (por defecto 3000)
 - MONGO_URL: URI de conexión a MongoDB
 - JWT_SECRET: Secreto para firmar/validar JWT
+
+AWS S3:
 - S3_ACCESS_KEY: Access Key de AWS
 - S3_SECRET_KEY: Secret Key de AWS
 - S3_REGION: Región (ej. us-east-2)
 - S3_BUCKET_NAME: Nombre del bucket
+
+Google OAuth:
+- GOOGLE_ID: Client ID
+- GOOGLE_SECRET: Client Secret
+- GOOGLE_CB_URL: Callback URL (ej. http://localhost:3000/auth/google/callback)
+
+Mailer (Gmail):
+- GMAIL_ADRESS: Dirección de Gmail emisora
+- GMAIL_PASSWORD: Password o App Password de Gmail
+
+Otros:
+- BACKEND_URL: Base URL pública del backend (para construir links en emails)
 
 Ejemplo `.env`:
 ```
 PORT=3000
 MONGO_URL="mongodb+srv://<user>:<pass>@<cluster>/<db>?retryWrites=true&w=majority"
 JWT_SECRET="mi_super_secreto"
+
 S3_ACCESS_KEY="AKIA..."
 S3_SECRET_KEY="..."
 S3_REGION="us-east-2"
 S3_BUCKET_NAME="taskflow-archivos-bucket"
+
+GOOGLE_ID="..."
+GOOGLE_SECRET="..."
+GOOGLE_CB_URL="http://localhost:3000/auth/google/callback"
+
+GMAIL_ADRESS="mi-cuenta@gmail.com"
+GMAIL_PASSWORD="app-password"
+
+BACKEND_URL="http://localhost:3000"
 ```
 
 ## Instalación
@@ -79,41 +107,27 @@ Base URL local por defecto: `http://localhost:3000`
 - Health: `GET /` → "api works"
 - Swagger UI: `GET /swagger`
 
-## UI SSR (Handlebars)  (layout con Navbar/Sidebar/Footer, guards de sesión/roles en cliente y consumo de la API con fetch nativo).
+## UI SSR (Handlebars)
+Layout con Navbar/Sidebar/Footer, guards de sesión/roles en cliente y consumo de la API con fetch nativo.
 
 Rutas SSR disponibles:
 - Públicas:
   - `GET /login` → Login (guarda JWT en localStorage y redirige a /app/dashboard)
   - `GET /register` → Registro (crea usuario, login automático y redirige)
 - Autenticadas (requieren JWT en localStorage):
-  - `GET /app/dashboard` → Dashboard (resumen mock, accesos rápidos)
+  - `GET /app/dashboard` → Dashboard
   - `GET /app/users` → Administración/Usuarios
-    - Lista usuarios (GET /users)
-    - Cambiar rol (PUT /users/:id)
-    - Crear usuario (POST /users) y Eliminar (DELETE /users/:id) — UI visible solo si rol=admin (además de middleware del servidor)
   - `GET /app/tasks` → Tareas (CRUD vía /tasks)
-    - Listado (GET /tasks)
-    - Crear (POST /tasks)
-    - Editar (PUT /tasks/:id)
-    - Eliminar (DELETE /tasks/:id) — solo admin (UI + server)
   - `GET /app/goals` → Metas (CRUD vía /goals)
   - `GET /app/calendar` → Calendario (dummy)
-    - Eventos (GET /calendar/events)
-    - “Sincronizar” (POST /calendar/sync)
   - `GET /app/files` → Archivos (uploader a S3)
-    - Subir (POST /files/upload) con FormData
 - Vista simple adicional para archivos:
   - `GET /files/view` → Página HBS sencilla para subir un archivo (útil para pruebas rápidas)
 
-Estructura de vistas:
-- `src/app/views/`:
-  - Páginas: `login.hbs`, `register.hbs`, `app-dashboard.hbs`, `app-users.hbs`, `app-tasks.hbs`, `app-goals.hbs`, `app-calendar.hbs`, `app-files.hbs`, `upload.hbs` (simple)
-  - Parciales: `partials/app-navbar.hbs`, `partials/app-sidebar.hbs`, `partials/app-footer.hbs`, `partials/app-guard-scripts.hbs`
-
 Guard de cliente y fetch autenticado:
-- `app-guard-scripts.hbs`:
+- `src/app/views/partials/app-guard-scripts.hbs`:
   - Protege todas las rutas `/app/*`: si no hay token en localStorage → redirige a `/login?returnTo=...`
-  - Decodifica el JWT para mostrar el rol en UI (badge de Navbar, texto en Sidebar y visibilidad del link de Admin)
+  - Decodifica el JWT para mostrar el rol en UI
   - Expone `window.apiFetch(url, options)` que adjunta `Authorization: Bearer <token>` automáticamente
 
 ## Autenticación y Autorización (API)
@@ -133,6 +147,9 @@ Guard de cliente y fetch autenticado:
 ### Auth (público)
 - `POST /auth/signup` — `{ name, email, password, role? (user|admin) }`
 - `POST /auth/login` — `{ email, password }` → `{ token, ... }`
+- `GET /auth/login/google` — OAuth inicio
+- `GET /auth/google/callback` — OAuth callback
+- `GET /auth/verify?token=...` — Verificación por correo
 
 ### Users (protegido)
 - `GET /users`
@@ -167,8 +184,93 @@ Guard de cliente y fetch autenticado:
 - `GET /files/:key` (protegido)
   - Devuelve contenido de S3 por streaming (owner o admin)
 
-## Cómo probar rápidamente
+## Validación de entrada (Zod)
+Se añadió validación sistemática de `req.body` usando Zod.
 
+- Middleware: `src/app/middelwares/validate.ts`
+  - `validateBody(schema)` valida el cuerpo y responde 400 con:
+    ```
+    { "message": "Validation failed", "errors": [ { path, message, code } ] }
+    ```
+- Esquemas: `src/app/validation/schemas.ts`
+  - Auth: `loginSchema`, `signupSchema`
+  - Users: `userCreateSchema`, `userUpdateSchema`
+  - Tasks: `taskCreateSchema`, `taskUpdateSchema`
+  - Goals: `goalCreateSchema`, `goalUpdateSchema`
+- Rutas con validación:
+  - Auth: `POST /auth/login`, `POST /auth/signup`
+  - Users: `POST /users` (admin), `PUT /users/:id`
+  - Tasks: `POST /tasks`, `PUT /tasks/:id`
+  - Goals: `POST /goals`, `PUT /goals/:id`
+
+## Pruebas automatizadas
+Se incorporó una suite de pruebas con Jest + ts-jest + Supertest.
+
+- Configuración:
+  - `jest.config.ts` (preset `ts-jest`, `tests/setup-env.ts` como setup)
+  - `tsconfig.jest.json` (CJS para Jest)
+  - `src/app/app.ts` expone `createApp()` para testear sin levantar servidor
+  - En entorno de test no se inicializa OAuth de Google ni el mailer real
+    - `src/app/models/mailer.ts` usa un transporter “dummy” si `NODE_ENV=test`
+- Tests incluidos (en `tests/`):
+  - `setup-env.ts`: define `NODE_ENV=test`, `JWT_SECRET` y silencia logs ruidosos
+  - `health.test.ts`: `GET /` responde "api works"
+  - `auth.validation.test.ts`: errores 400 por cuerpo inválido en login/signup
+  - `tasks.validation.test.ts`: errores 400 por cuerpo inválido en POST/PUT /tasks (con JWT válido)
+  - `goals.validation.test.ts`: errores 400 por cuerpo inválido en POST/PUT /goals (con JWT válido)
+  - `users.authz.validation.test.ts`:
+    - `GET /users` → 401 sin Authorization
+    - `POST /users` → 403 si rol=user
+    - `POST/PUT /users` → 400 por body inválido (aún siendo admin)
+    - `DELETE /users/:id` → 403 si rol=user
+- Ejecución:
+  - `npm test`
+  - `npm run test:watch`
+  - `npm run test:ci`
+- Estado actual: 5 suites, 15 pruebas en total, todas pasan.
+
+Notas:
+- Las pruebas usan JWTs firmados en memoria (mock del usuario y rol).
+- No se ejercen operaciones reales de DB ni S3; foco en validación y autorización.
+- Si deseas cobertura: agrega `"test:coverage": "jest --coverage"` y ejecuta `npm run test:coverage`.
+
+## Tiempo real (WebSockets)
+Integración con Socket.IO en el mismo servidor HTTP, con autenticación JWT en handshake. Se emiten eventos ante operaciones REST (tasks/goals/files) y hay una vista de prueba:
+
+- Vista demo: `GET /socket-demo`
+  - Pega tu JWT y conéctate
+  - Envía “ping” y recibe “pong”
+  - Observa eventos `task:*`, `goal:*`, `file:*` al usar los endpoints
+
+Formas de enviar JWT al conectar:
+- Header: `Authorization: Bearer <TOKEN>`
+- query `?token=<TOKEN>` o `auth: { token }` en el cliente
+
+## Troubleshooting
+- “The partial X could not be found” (HBS):
+  - Verifica archivos en `src/app/views/partials` y nombres usados en `{{> X}}`
+  - nodemon recarga `.hbs` y (re)registra parciales automáticamente en dev
+- Google OAuth y SSR:
+  - El callback redirige a `/app/dashboard`. Para persistir token en cliente (localStorage) puedes adaptar el flujo para redirigir con `?token=...` o setear cookie httpOnly en el backend.
+- Swagger:
+  - UI en `/swagger`. Asegúrate de que `servers` en `swagger.config.ts` apunte al puerto correcto (`PORT`).
+- AWS SDK v2:
+  - El proyecto utiliza `aws-sdk` v2. Se recomienda migrar a `@aws-sdk/client-s3` v3 (ya está instalada la dependencia v3).
+- Jest/ESM:
+  - El mailer usa un stub en entorno de test para evitar issues con paquetes ESM en Jest.
+
+## Tecnologías
+- Node.js + Express 5 (TypeScript)
+- MongoDB + Mongoose
+- JWT (bcrypt para hashing)
+- Multer + AWS S3 (aws-sdk v2)
+- Swagger (swagger-jsdoc + swagger-ui-express)
+- Handlebars (hbs) para vistas SSR
+- Socket.IO
+- Zod (validación)
+- Jest + ts-jest + Supertest (pruebas)
+
+## Cómo probar rápidamente (API)
 1) Registrar usuario (opcionalmente admin):
 ```
 POST http://localhost:3000/auth/signup
@@ -219,38 +321,3 @@ curl -X POST "http://localhost:3000/tasks" \
 curl -X POST "http://localhost:3000/files/upload" \
   -H "Authorization: Bearer <TOKEN)" \
   -F "file=@/ruta/a/archivo.png"
-```
-
-## Tiempo real (WebSockets)
-Integración con Socket.IO en el mismo servidor HTTP, con autenticación JWT en handshake. Se emiten eventos ante operaciones REST (tasks/goals/files) y hay una vista de prueba:
-
-- Vista demo: `GET /socket-demo`
-  - Pega tu JWT y conéctate
-  - Envía “ping” y recibe “pong”
-  - Observa eventos `task:*`, `goal:*`, `file:*` al usar los endpoints
-
-Formas de enviar JWT al conectar:
-- Header: `Authorization: Bearer <TOKEN>`
-- query `?token=<TOKEN>` o `auth: { token }` en el cliente
-
-## Troubleshooting (HBS/Partials)
-- “The partial X could not be found”:
-  - Verifica que el archivo exista en `src/app/views/partials` y que el nombre coincida con el usado en `{{> X}}`
-  - En desarrollo, nodemon recarga .hbs y (re)registra parciales automáticamente
-  - El servidor imprime rutas de vistas/partials y registra un fallback manual de parciales en `src/index.ts`
-
-## Notas y seguridad
-- JWT en localStorage (UI SSR) por simplicidad. En producción, considerar cookies httpOnly.
-- Endpoints protegidos validan JWT (Authorization: Bearer).
-- Agregar rate limiting/logs si necesitas endurecer el servicio.
-- CORS no está configurado explícitamente (Swagger/Postman locales funcionan sin proxy).
-- AWS SDK v2 muestra aviso de mantenimiento; recomendable migrar a v3 cuando sea posible.
-
-## Tecnologías
-- Node.js + Express 5 (TypeScript)
-- MongoDB + Mongoose
-- JWT (bcrypt para hashing)
-- Multer + AWS S3 (aws-sdk v2)
-- Swagger (swagger-jsdoc + swagger-ui-express)
-- Handlebars (hbs) para vistas SSR
-- Socket.IO
