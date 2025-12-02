@@ -11,6 +11,7 @@ export interface ITask extends Document{
   completed: boolean;
   createdAt: string; // ISO 8601 string
   updatedAt: string; // ISO 8601 string
+  owner: any; // ObjectId del creador (ref User)
 }
 
 export interface ITaskCreate extends Document{

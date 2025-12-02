@@ -10,6 +10,7 @@ const taskSchema = new Schema<ITask>(
     estimateHours: { type: Number, required: false },
     dueDate: { type: String, required: false }, 
     completed: { type: Boolean, default: false },
+    owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   {
     timestamps: true, 
