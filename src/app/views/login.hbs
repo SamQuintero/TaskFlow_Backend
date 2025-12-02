@@ -34,24 +34,43 @@
       </div>
 
       <form id="loginForm" class="space-y-4 rounded-lg border bg-white p-6 shadow-sm">
-        <div class="space-y-1">
-          <label class="text-sm text-gray-700">Correo</label>
-          <input id="email" type="email" class="tf-input border-gray-300" placeholder="usuario@ejemplo.com" required />
-        </div>
-        <div class="space-y-1">
-          <label class="text-sm text-gray-700">Contraseña</label>
-          <input id="password" type="password" class="tf-input border-gray-300" placeholder="••••••••" required />
-        </div>
+  <div class="space-y-1">
+    <label class="text-sm font-medium text-gray-700">Correo</label>
+    <input 
+      id="email" 
+      type="email" 
+      class="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+      placeholder="usuario@ejemplo.com" 
+      required 
+    />
+  </div>
 
-        <button type="submit" id="btnLogin" class="tf-btn tf-btn-primary w-full">Ingresar</button>
+  <div class="space-y-1">
+    <label class="text-sm font-medium text-gray-700">Contraseña</label>
+    <input 
+      id="password" 
+      type="password" 
+      class="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+      placeholder="••••••••" 
+      required 
+    />
+  </div>
 
-        <p id="msg" class="mt-2 text-center text-sm text-red-600 hidden"></p>
+  <button 
+    type="submit" 
+    id="btnLogin" 
+    class="w-full rounded-md bg-blue-600 py-2 px-4 text-sm font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+  >
+    Ingresar
+  </button>
 
-        <div class="pt-2 text-center text-sm text-gray-600">
-          ¿No tienes cuenta?
-          <a href="/register" class="text-blue-600 underline underline-offset-4">Crear cuenta</a>
-        </div>
-      </form>
+  <p id="msg" class="mt-2 text-center text-sm text-red-600 hidden"></p>
+
+  <div class="pt-2 text-center text-sm text-gray-600">
+    ¿No tienes cuenta?
+    <a href="/register" class="text-blue-600 underline underline-offset-4">Crear cuenta</a>
+  </div>
+</form>
     </div>
   </main>
 
