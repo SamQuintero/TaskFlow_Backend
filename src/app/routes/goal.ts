@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { getGoals, getGoal, createGoal, updateGoal, deleteGoal } from "../controllers/goal";
 import { authMiddleware, authorizeRoles} from "../middelwares/auth";
+import { validateBody } from "../middelwares/validate";
+import { goalCreateSchema, goalUpdateSchema } from "../validation/schemas";
 const router = Router();
 
 router.use(authMiddleware)
@@ -113,7 +115,7 @@ router.get("/:id", getGoal);
  *                 dueDate: "2025-12-31T00:00:00.000Z"
  *                 completed: false
  */
-router.post("/", createGoal);
+router.post("/", validateBody(goalCreateSchema), createGoal);
 /**
  * @openapi
  * /goals/{id}:
@@ -159,7 +161,7 @@ router.post("/", createGoal);
  *                 dueDate: "2026-01-15T00:00:00.000Z"
  *                 completed: true
  */
-router.put("/:id", updateGoal);
+router.put("/:id", validateBody(goalUpdateSchema), updateGoal);
 /**
  * @openapi
  * /goals/{id}:

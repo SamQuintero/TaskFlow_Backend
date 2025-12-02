@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { getTasks, getTask, createTask, updateTask, deleteTask } from "../controllers/task";
 import { authMiddleware , authorizeRoles} from "../middelwares/auth";
+import { validateBody } from "../middelwares/validate";
+import { taskCreateSchema, taskUpdateSchema } from "../validation/schemas";
 
 
 const router = Router();
@@ -124,7 +126,7 @@ router.get("/:id", getTask);
  *                 dueDate: "2025-12-31T00:00:00.000Z"
  *                 completed: false
  */
-router.post("/", createTask);
+router.post("/", validateBody(taskCreateSchema), createTask);
 /**
  * @openapi
  * /tasks/{id}:
@@ -172,7 +174,7 @@ router.post("/", createTask);
  *                 dueDate: "2026-01-15T00:00:00.000Z"
  *                 completed: false
  */
-router.put("/:id", updateTask);
+router.put("/:id", validateBody(taskUpdateSchema), updateTask);
 /**
  * @openapi
  * /tasks/{id}:

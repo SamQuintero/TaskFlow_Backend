@@ -3,6 +3,8 @@ import passport from "passport";
 import jwt from "jsonwebtoken";
 import { login, signup, resetPassword, forgotPassword} from "../controllers/auth";
 import {UserModel} from "../models/users";
+import { validateBody } from "../middelwares/validate";
+import { loginSchema, signupSchema } from "../validation/schemas";
 
 const router = Router();
 
@@ -37,7 +39,7 @@ const router = Router();
  *             example:
  *               token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  */
-router.post('/login', login);
+router.post('/login', validateBody(loginSchema), login);
 /**
  * @openapi
  * /auth/signup:
@@ -64,7 +66,7 @@ router.post('/login', login);
  *       200:
  *         description: OK (sin cuerpo)
  */
-router.post('/signup', signup);
+router.post('/signup', validateBody(signupSchema), signup);
 
 // iniciar login con Google
 router.get(
