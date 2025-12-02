@@ -1,6 +1,10 @@
 import { Router } from "express";
-import { login, signup} from "../controllers/auth";
-import { authMiddleware } from "../middelwares/auth";
+import passport from "passport";
+import jwt from "jsonwebtoken";
+import { login, signup, resetPassword, forgotPassword} from "../controllers/auth";
+import {UserModel} from "../models/users";
+import { validateBody } from "../middelwares/validate";
+import { loginSchema, signupSchema } from "../validation/schemas";
 
 const router = Router();
 
@@ -35,7 +39,7 @@ const router = Router();
  *             example:
  *               token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  */
-router.post('/login', login);
+router.post('/login', validateBody(loginSchema), login);
 /**
  * @openapi
  * /auth/signup:
@@ -62,6 +66,86 @@ router.post('/login', login);
  *       200:
  *         description: OK (sin cuerpo)
  */
-router.post('/signup', signup);
+router.post('/signup', validateBody(signupSchema), signup);
+
+// iniciar login con Google
+router.get(
+  "/login/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+// callback
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  async (req: any, res) => {
+        try {
+      const profile = req.user;
+
+      const email = profile.emails[0].value;
+      const name = profile.displayName;
+      const googleId = profile.id;
+      const avatar = profile.photos?.[0]?.value;
+
+      let user = await UserModel.findOne({ email });
+
+      if (!user) {
+        user = await UserModel.create({
+          email,
+          name,
+          googleId,
+          avatar,
+          password: null, 
+        });
+      }
+
+      const token = jwt.sign(
+        {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+        },
+        process.env.JWT_SECRET!,
+        { expiresIn: "7d" }
+      );
+
+      res.redirect('/app/dashboard');
+    } catch (error) {
+      console.error(error);
+      res.redirect("/login?error=google-auth");
+    }
+  }
+);
+
+router.get("/verify", async (req, res) => {
+  const token = req.query.token as string;
+
+  if (!token) return res.status(400).send("Token inválido");
+
+  const user = await UserModel.findOne({ verificationToken: token });
+
+  if (!user) return res.status(400).send("Token no válido o expirado");
+
+  user.verified = true;
+
+  await user.save();
+
+
+  res.redirect('/app/dashboard');
+});
+
+
+router.get("/forgot-password", (req, res) => {
+  res.render("forgotPassword");
+});
+
+router.get("/reset-password/", (req, res) => {
+  res.render("resetPassword", { token: req.query.token });
+});
+
+router.post("/forgot-password", forgotPassword);
+
+
+router.post("/reset-password", resetPassword);
 
 export default router;

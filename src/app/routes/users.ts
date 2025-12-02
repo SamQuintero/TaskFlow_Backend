@@ -1,6 +1,8 @@
 import { Router, json } from "express";
 import { getUsers, getUser, createUser, updateUser, deleteUser } from "../controllers/users";
 import { authMiddleware, authorizeRoles} from "../middelwares/auth";
+import { validateBody } from "../middelwares/validate";
+import { userCreateSchema, userUpdateSchema } from "../validation/schemas";
 
 const router = Router();
 
@@ -108,7 +110,7 @@ router.get("/:id", getUser);
  *               name: "Carlos"
  *               email: "carlos@example.com"
  */
-router.post("", authorizeRoles('admin'), createUser);
+router.post("", authorizeRoles('admin'), validateBody(userCreateSchema), createUser);
 /**
  * @openapi
  * /user/{id}:
@@ -150,7 +152,7 @@ router.post("", authorizeRoles('admin'), createUser);
  *               name: "Carlos Editado"
  *               email: "carlos.edit@example.com"
  */
-router.put("/:id", updateUser);
+router.put("/:id", validateBody(userUpdateSchema), updateUser);
 /**
  * @openapi
  * /user/{id}:

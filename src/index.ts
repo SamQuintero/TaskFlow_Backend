@@ -8,6 +8,8 @@ dotenv.config()
 import swaggerJsDoc from "swagger-jsdoc"
 import { setup, serve} from "swagger-ui-express"
 import swaggerOptions from "./../swagger.config";
+import passport from "passport";
+import { initGoogleAuth } from "./app/middelwares/googleAuth";
 
 
 import routes from "./app/routes";
@@ -29,6 +31,10 @@ hbs.registerPartials(partialsDir);
 
 console.log("HBS views:", viewsDir);
 console.log("HBS partials:", partialsDir);
+
+initGoogleAuth();
+
+app.use(passport.initialize());
 
 // Manual partials registration as a fallback
 try {

@@ -5,105 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Crear cuenta | TaskFlow</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  
 </head>
-<body class="bg-gray-100 min-h-screen">
-  <header class="border-b bg-white">
-    <div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-      <a href="/" class="font-semibold">TaskFlow</a>
-      <nav class="text-sm">
-        <a class="hover:underline underline-offset-4" href="/login">Ingresar</a>
-        <span class="mx-2 text-gray-400">/</span>
-        <a class="text-blue-600 underline underline-offset-4" href="/register">Crear cuenta</a>
-      </nav>
-    </div>
-  </header>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center font-sans text-slate-800">
 
-  <main class="mx-auto max-w-6xl px-4 py-12">
-    <div class="mx-auto max-w-md">
-      <div class="mb-8 text-center">
-        <h1 class="text-3xl font-bold tracking-tight">Crear cuenta</h1>
-        <p class="mt-2 text-sm text-gray-600">
-          Registra tu cuenta para comenzar a usar la aplicación.
-        </p>
+  <div class="w-full max-w-md px-6 py-12 bg-white rounded-2xl shadow-xl border border-slate-100 mx-4">
+    
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-extrabold text-blue-700 tracking-tight">TaskFlow</h1>
+      <h2 class="mt-4 text-xl font-semibold text-slate-700">Crear una cuenta</h2>
+      <p class="mt-2 text-sm text-slate-500">Únete para empezar a gestionar tus tareas</p>
+    </div>
+
+    <form id="registerForm" class="space-y-5">
+      
+      <div>
+        <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
+        <input 
+          id="name" 
+          type="text" 
+          class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 outline-none transition-all shadow-sm placeholder-slate-400" 
+          placeholder="Ej. Juan Pérez" 
+          required 
+        />
       </div>
 
-      <form id="registerForm" class="space-y-4 rounded-lg border bg-white p-6 shadow-sm">
-          <div class="space-y-1">
-            <label class="text-sm font-medium text-gray-700">Nombre</label>
-            <input 
-              id="name" 
-              type="text" 
-              class="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
-              placeholder="Tu nombre" 
-              required 
-            />
-          </div>
+      <div>
+        <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+        <input 
+          id="email" 
+          type="email" 
+          class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 outline-none transition-all shadow-sm placeholder-slate-400" 
+          placeholder="usuario@ejemplo.com" 
+          required 
+        />
+      </div>
 
-          <div class="space-y-1">
-            <label class="text-sm font-medium text-gray-700">Correo</label>
-            <input 
-              id="email" 
-              type="email" 
-              class="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
-              placeholder="usuario@ejemplo.com" 
-              required 
-            />
-          </div>
+      <div>
+        <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+        <input 
+          id="password" 
+          type="password" 
+          class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 outline-none transition-all shadow-sm placeholder-slate-400" 
+          placeholder="Mínimo 6 caracteres" 
+          required 
+        />
+        <p class="mt-1 text-xs text-slate-400">Debe tener al menos 6 caracteres.</p>
+      </div>
 
-          <div class="space-y-1">
-            <label class="text-sm font-medium text-gray-700">Contraseña</label>
-            <input 
-              id="password" 
-              type="password" 
-              class="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
-              placeholder="••••••••" 
-              required 
-            />
-          </div>
+      <button 
+        type="submit" 
+        id="btnRegister" 
+        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+      >
+        Crear cuenta
+      </button>
 
-          <button 
-            type="submit" 
-            id="btnRegister" 
-            class="w-full rounded-md bg-gray-900 py-2 px-4 text-sm font-medium text-white transition hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-          >
-            Crear cuenta
-          </button>
+      <div id="msg" class="mt-4 p-3 rounded-lg text-center text-sm hidden"></div>
 
-          <p id="msg" class="mt-2 text-center text-sm text-red-600 hidden"></p>
+    </form>
 
-          <div class="pt-2 text-center text-sm text-gray-600">
-            ¿Ya tienes cuenta?
-            <a href="/login" class="text-blue-600 underline underline-offset-4">Ingresar</a>
-          </div>
-</form>
+    <div class="mt-8 text-center text-sm text-slate-600">
+      ¿Ya tienes una cuenta?
+      <a href="/login" class="font-semibold text-blue-600 hover:text-blue-800 hover:underline">Inicia sesión</a>
     </div>
-  </main>
+  </div>
 
-  <footer class="border-t bg-white">
-    <div class="mx-auto max-w-6xl px-4 py-6 text-center text-xs text-gray-500">
-      TaskFlow &middot; Uso educativo/demostrativo
-    </div>
+  <footer class="mt-8 text-center text-xs text-slate-400">
+    TaskFlow &copy; 2025 &middot; Uso educativo/demostrativo
   </footer>
 
   <script>
-    const TOKEN_KEY = "taskflow_token";
-
-    function setAuthToken(token) {
-      if (!token) localStorage.removeItem(TOKEN_KEY);
-      else localStorage.setItem(TOKEN_KEY, token);
-    }
-
-    function getQueryParam(name) {
-      const url = new URL(window.location.href);
-      return url.searchParams.get(name);
-    }
-
     async function signup(name, email, password) {
       const res = await fetch("/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Por defecto creamos con rol "user" en el backend
         body: JSON.stringify({ name, email, password, role: "user" }),
       });
       if (!res.ok) {
@@ -117,32 +92,21 @@
       return res.json();
     }
 
-    async function login(email, password) {
-      const res = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) {
-        let message = "Credenciales inválidas";
-        try {
-          const j = await res.json();
-          message = j.message || message;
-        } catch {}
-        throw new Error(message);
-      }
-      return res.json(); // { message, token }
-    }
-
     const form = document.getElementById("registerForm");
     const btn = document.getElementById("btnRegister");
     const msg = document.getElementById("msg");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      
+      // Limpiar estados previos
       msg.classList.add("hidden");
+      msg.className = "mt-4 p-3 rounded-lg text-center text-sm hidden";
+      
       btn.disabled = true;
+      const originalText = btn.textContent;
       btn.textContent = "Creando...";
+      btn.classList.add("opacity-70", "cursor-not-allowed");
 
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
@@ -150,16 +114,22 @@
 
       try {
         await signup(name, email, password);
-        const { token } = await login(email, password);
-        setAuthToken(token);
-        const returnTo = getQueryParam("returnTo") || "/app/dashboard";
-        window.location.href = returnTo;
+
+        // Éxito
+        msg.textContent = "¡Cuenta creada con éxito! Revisa tu correo para verificarla.";
+        msg.classList.remove("hidden");
+        msg.classList.add("bg-green-50", "text-green-700", "border", "border-green-100");
+        
+        form.reset();
       } catch (err) {
+        // Error
         msg.textContent = err.message || "No fue posible crear la cuenta";
         msg.classList.remove("hidden");
+        msg.classList.add("bg-red-50", "text-red-700", "border", "border-red-100");
       } finally {
         btn.disabled = false;
-        btn.textContent = "Crear cuenta";
+        btn.textContent = originalText;
+        btn.classList.remove("opacity-70", "cursor-not-allowed");
       }
     });
   </script>
