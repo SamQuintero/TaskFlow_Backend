@@ -1,7 +1,7 @@
 import { Router } from "express";
 import passport from "passport";
 import jwt from "jsonwebtoken";
-import { login, signup} from "../controllers/auth";
+import { login, signup, resetPassword, forgotPassword} from "../controllers/auth";
 import {UserModel} from "../models/users";
 import { validateBody } from "../middelwares/validate";
 import { loginSchema, signupSchema } from "../validation/schemas";
@@ -133,5 +133,19 @@ router.get("/verify", async (req, res) => {
 
   res.redirect('/app/dashboard');
 });
+
+
+router.get("/forgot-password", (req, res) => {
+  res.render("forgotPassword");
+});
+
+router.get("/reset-password/", (req, res) => {
+  res.render("resetPassword", { token: req.query.token });
+});
+
+router.post("/forgot-password", forgotPassword);
+
+
+router.post("/reset-password", resetPassword);
 
 export default router;
