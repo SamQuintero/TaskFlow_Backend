@@ -6,7 +6,8 @@ import { publishTaskCreated, publishTaskUpdated, publishTaskDeleted } from "../.
 
 export const getTasks = async (req: Request, res: Response) => {
   try {
-    const tasks = await Task.find();
+    const userId = (req as any).user?.id as string;
+    const tasks = await Task.find({ owner: userId });
     res.json({ data: tasks });
   } catch (error) {
     res.status(500).json({ message: "Error fetching tasks", error });
@@ -17,7 +18,8 @@ export const getTasks = async (req: Request, res: Response) => {
 export const getTask = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const task = await Task.findById(id);
+    const userId = (req as any).user?.id as string;
+    const task = await Task.findOne({ _id: id, owner: userId });
     if (!task) return res.status(404).json({ message: "Task not found" });
     res.json({ data: task });
   } catch (error) {
@@ -39,6 +41,7 @@ export const createTask = async (req: Request, res: Response) => {
       estimateHours: body.estimateHours,
       dueDate: body.dueDate,
       completed: body.completed ?? false,
+      owner: (req as any).user?.id,
     });
 
     const savedTask = await newTask.save();
@@ -68,10 +71,14 @@ export const updateTask = async (req: Request, res: Response) => {
     const { id } = req.params;
     const changes = req.body as ITaskUpdate;
 
-    const updatedTask = await Task.findByIdAndUpdate(id, changes, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedTask = await Task.findOneAndUpdate(
+      { _id: id, owner: (req as any).user?.id },
+      changes,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!updatedTask) return res.status(404).json({ message: "Task not found" });
     try {

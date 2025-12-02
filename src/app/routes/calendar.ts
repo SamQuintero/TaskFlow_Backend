@@ -11,13 +11,8 @@ router.use(authMiddleware)
  *   post:
  *     tags: [Calendar]
  *     summary: Sincronizar calendario (dummy)
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: OK
@@ -35,13 +30,8 @@ router.post("/sync", syncCalendar);
  *   get:
  *     tags: [Calendar]
  *     summary: Obtener eventos del calendario (dummy)
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token dummy (?token=12345)
- *         schema:
- *           type: string
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: OK

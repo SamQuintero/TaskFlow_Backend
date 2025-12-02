@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Calendario | TaskFlow</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .cell-base { min-height: 96px; }
+    @media (min-width: 768px) {
+      .cell-base { min-height: 120px; }
+    }
+    .pill { display: inline-block; font-size: 11px; line-height: 16px; padding: 0 6px; border-radius: 8px; white-space: nowrap; }
+    .pill-task { background-color: #dbeafe; color: #1e40af; }  /* blue-100 / blue-800 */
+    .pill-goal { background-color: #dcfce7; color: #166534; }  /* green-100 / green-800 */
+    .pill-completed { opacity: 0.65; text-decoration: line-through; }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
   {{> app-navbar}}
@@ -14,51 +24,66 @@
       {{> app-sidebar}}
 
       <main class="flex min-h-full flex-col p-4 md:p-6">
-        <div class="mb-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 class="text-2xl font-bold tracking-tight">Calendario</h1>
-          <div class="flex items-center gap-2">
-            <button id="btnSync" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Sincronizar</button>
-            <button id="btnRefresh" class="rounded border px-3 py-1 text-sm hover:bg-gray-50">Refrescar</button>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="inline-flex items-center gap-1 rounded border bg-white p-1">
+              <button id="btnPrev" class="rounded px-3 py-1 text-sm hover:bg-gray-50" aria-label="Anterior">‹</button>
+              <button id="btnToday" class="rounded px-3 py-1 text-sm hover:bg-gray-50">Hoy</button>
+              <button id="btnNext" class="rounded px-3 py-1 text-sm hover:bg-gray-50" aria-label="Siguiente">›</button>
+            </div>
+
+            <div class="inline-flex items-center gap-1 rounded border bg-white p-1">
+              <button data-view="month" class="view-btn rounded px-3 py-1 text-sm hover:bg-gray-50">Mes</button>
+              <button data-view="week" class="view-btn rounded px-3 py-1 text-sm hover:bg-gray-50">Semana</button>
+            </div>
+
+            <div class="inline-flex items-center gap-2">
+              <button id="btnSync" class="rounded border bg-white px-3 py-1 text-sm hover:bg-gray-50">Sincronizar</button>
+              <button id="btnRefresh" class="rounded border bg-white px-3 py-1 text-sm hover:bg-gray-50">Refrescar</button>
+            </div>
           </div>
         </div>
 
-        <!-- Toolbar de vistas (mock visual) -->
-        <div class="mb-4 inline-flex items-center gap-1 rounded border bg-white p-1">
-          <button data-view="month" class="view-btn rounded px-3 py-1 text-sm hover:bg-gray-50">Mes</button>
-          <button data-view="week" class="view-btn rounded px-3 py-1 text-sm hover:bg-gray-50">Semana</button>
-          <button data-view="day" class="view-btn rounded px-3 py-1 text-sm hover:bg-gray-50">Día</button>
+        <div class="mb-3 text-sm text-gray-700">
+          <span id="currentLabel" class="font-medium"></span>
+          <span id="eventsCount" class="ml-2 text-xs text-gray-500"></span>
         </div>
-        <div id="viewInfo" class="mb-4 text-xs text-gray-500">Vista actual: Mes</div>
 
-        <!-- Tabla de eventos -->
+        <!-- CALENDARIO -->
         <section class="rounded-lg border bg-white">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="bg-gray-50 text-left">
-                <tr>
-                  <th class="px-3 py-2 font-medium">Título</th>
-                  <th class="px-3 py-2 font-medium">Inicio</th>
-                  <th class="px-3 py-2 font-medium">Fin</th>
-                </tr>
-              </thead>
-              <tbody id="eventsTbody">
-                <tr>
-                  <td colspan="3" class="px-3 py-6 text-center text-gray-500">Cargando...</td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- Cabecera Mes -->
+          <div id="monthHeader" class="grid grid-cols-7 gap-px border-b bg-gray-200 text-center text-xs font-medium text-gray-700">
+            <div class="bg-white px-2 py-2">Lun</div>
+            <div class="bg-white px-2 py-2">Mar</div>
+            <div class="bg-white px-2 py-2">Mié</div>
+            <div class="bg-white px-2 py-2">Jue</div>
+            <div class="bg-white px-2 py-2">Vie</div>
+            <div class="bg-white px-2 py-2">Sáb</div>
+            <div class="bg-white px-2 py-2">Dom</div>
+          </div>
+
+          <!-- Grilla Mes -->
+          <div id="monthView" class="grid grid-cols-7 gap-px bg-gray-200">
+            <!-- 42 celdas por JS -->
+          </div>
+
+          <!-- Cabecera Semana -->
+          <div id="weekHeader" class="hidden grid grid-cols-7 gap-px border-t border-b bg-gray-200 text-center text-xs font-medium text-gray-700">
+            <!-- por JS -->
+          </div>
+
+          <!-- Grilla Semana -->
+          <div id="weekView" class="hidden grid grid-cols-7 gap-px bg-gray-200">
+            <!-- 7 celdas por JS -->
           </div>
         </section>
 
-        <div class="mt-2 text-xs text-gray-500" id="listMeta"></div>
-
-        <template id="eventRowTpl">
-          <tr class="border-t">
-            <td class="px-3 py-2"><span data-field="title"></span></td>
-            <td class="px-3 py-2"><span data-field="start"></span></td>
-            <td class="px-3 py-2"><span data-field="end"></span></td>
-          </tr>
-        </template>
+        <div class="mt-3 text-xs text-gray-500">
+          - Las tareas y metas aparecen en su fecha de vencimiento (dueDate).<br/>
+          - Colores: Tareas (azul), Metas (verde).
+        </div>
       </main>
     </div>
   </div>
@@ -67,83 +92,250 @@
   {{> app-guard-scripts}}
 
   <script>
+    // Utilidades de fecha (semana inicia en Lunes)
+    function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+    function isSameDay(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+    function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+    function startOfWeek(d){
+      const x = startOfDay(d);
+      const dow = (x.getDay()+6)%7; // 0 = Lunes
+      return addDays(x, -dow);
+    }
+    function endOfWeek(d){ return addDays(startOfWeek(d), 6); }
+    function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+    function endOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
+    function ymdLocal(date) {
+      // YYYY-MM-DD en zona local
+      const y = date.getFullYear();
+      const m = String(date.getMonth()+1).padStart(2,'0');
+      const d = String(date.getDate()).padStart(2,'0');
+      return `${y}-${m}-${d}`;
+    }
+
+    const monthNames = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+    const shortDays = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+
+    // Estado
+    let currentDate = new Date();
+    let currentView = "month"; // "month" | "week"
+    let eventsData = []; // [{id,type,title,start,end}]
+    let eventsByDate = new Map(); // 'YYYY-MM-DD' -> array de eventos
+
+    // DOM
     const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+    const monthViewEl = $("#monthView");
+    const weekViewEl = $("#weekView");
+    const weekHeaderEl = $("#weekHeader");
+    const monthHeaderEl = $("#monthHeader");
+    const labelEl = $("#currentLabel");
+    const eventsCountEl = $("#eventsCount");
 
-    function fmt(dateIso) {
-      if (!dateIso) return "-";
-      try {
-        const d = new Date(dateIso);
-        if (isNaN(d.getTime())) return "-";
-        return d.toLocaleString();
-      } catch { return "-"; }
-    }
-
+    // Eventos: carga y mapeo
     async function loadEvents() {
-      const tbody = $("#eventsTbody");
-      tbody.innerHTML = '<tr><td colspan="3" class="px-3 py-6 text-center text-gray-500">Cargando...</td></tr>';
-      try {
-        const resp = await window.apiFetch("/calendar/events", { method: "GET" });
-        const events = resp?.data || [];
-        renderEvents(events);
-      } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="3" class="px-3 py-6 text-center text-red-600">Error cargando eventos: ' + (err.message || 'Error') + '</td></tr>';
+      const res = await window.apiFetch("/calendar/events", { method: "GET" });
+      const list = Array.isArray(res?.data) ? res.data : [];
+      eventsData = list;
+      eventsByDate = new Map();
+      for (const ev of list) {
+        const d = new Date(ev.start);
+        if (isNaN(d.getTime())) continue;
+        const key = ymdLocal(d);
+        if (!eventsByDate.has(key)) eventsByDate.set(key, []);
+        eventsByDate.get(key).push(ev);
       }
+      eventsCountEl.textContent = `Eventos cargados: ${list.length}`;
     }
 
-    function renderEvents(events) {
-      const tbody = $("#eventsTbody");
-      const tpl = $("#eventRowTpl");
-      tbody.innerHTML = "";
-
-      if (!events || !events.length) {
-        tbody.innerHTML = '<tr><td colspan="3" class="px-3 py-6 text-center text-gray-500">Aún no hay eventos</td></tr>';
-        $("#listMeta").textContent = "0 evento(s)";
-        return;
+    // Render
+    function render(){
+      if (currentView === "month") {
+        monthHeaderEl.classList.remove("hidden");
+        monthViewEl.classList.remove("hidden");
+        weekHeaderEl.classList.add("hidden");
+        weekViewEl.classList.add("hidden");
+        renderMonth();
+      } else {
+        monthHeaderEl.classList.add("hidden");
+        monthViewEl.classList.add("hidden");
+        weekHeaderEl.classList.remove("hidden");
+        weekViewEl.classList.remove("hidden");
+        renderWeek();
       }
+      markActiveViewBtn();
+    }
 
-      $("#listMeta").textContent = events.length + " evento(s)";
-
-      events.forEach(ev => {
-        const row = tpl.content.firstElementChild.cloneNode(true);
-        $('[data-field="title"]', row).textContent = ev.title || "-";
-        $('[data-field="start"]', row).textContent = fmt(ev.start);
-        $('[data-field="end"]', row).textContent = fmt(ev.end);
-        tbody.appendChild(row);
+    function markActiveViewBtn(){
+      document.querySelectorAll(".view-btn").forEach(btn => {
+        const v = btn.getAttribute("data-view");
+        if (v === currentView) {
+          btn.classList.add("bg-blue-600","text-white");
+          btn.classList.remove("hover:bg-gray-50");
+        } else {
+          btn.classList.remove("bg-blue-600","text-white");
+          btn.classList.add("hover:bg-gray-50");
+        }
       });
     }
 
-    async function syncCalendar() {
-      const btn = $("#btnSync");
-      const prev = btn.textContent;
-      btn.textContent = "Sincronizando...";
-      btn.disabled = true;
-      try {
-        await window.apiFetch("/calendar/sync", { method: "POST" });
-      } catch (err) {
-        // Soft error UI
-        alert("No se pudo sincronizar: " + (err.message || "Error"));
-      } finally {
-        btn.textContent = prev;
-        btn.disabled = false;
+    function renderMonth(){
+      monthViewEl.innerHTML = "";
+      const firstDayOfMonth = startOfMonth(currentDate);
+      const gridStart = startOfWeek(firstDayOfMonth); // lunes anterior o igual
+      const today = startOfDay(new Date());
+      const monthIdx = currentDate.getMonth();
+      labelEl.textContent = monthNames[monthIdx] + " " + currentDate.getFullYear();
+
+      // 6 filas x 7 columnas = 42
+      for (let i=0; i<42; i++){
+        const day = addDays(gridStart, i);
+        const inMonth = (day.getMonth() === monthIdx);
+        const key = ymdLocal(day);
+
+        const cell = document.createElement("div");
+        cell.className = "bg-white p-2 cell-base flex flex-col";
+        if (!inMonth) cell.classList.add("text-gray-400","bg-gray-50");
+
+        const top = document.createElement("div");
+        top.className = "mb-1 flex items-center justify-between text-xs";
+        const dayNum = document.createElement("span");
+        dayNum.textContent = String(day.getDate());
+
+        if (isSameDay(day, today)) {
+          dayNum.className = "inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-500 bg-blue-50";
+        } else {
+          dayNum.classList.add("text-gray-700","font-medium");
+        }
+
+        top.appendChild(dayNum);
+        cell.appendChild(top);
+
+        // Eventos del día
+        const slot = document.createElement("div");
+        slot.className = "flex-1 space-y-1";
+        const dayEvents = eventsByDate.get(key) || [];
+        if (dayEvents.length) {
+          dayEvents.slice(0, 3).forEach(ev => {
+            const pill = document.createElement("div");
+            pill.className = "pill " + (ev.type === "goal" ? "pill-goal" : "pill-task") + (ev.completed ? " pill-completed" : "");
+            pill.textContent = (ev.completed ? "✓ " : "") + (ev.title || (ev.type === "goal" ? "Meta" : "Tarea"));
+            slot.appendChild(pill);
+          });
+          if (dayEvents.length > 3) {
+            const more = document.createElement("div");
+            more.className = "text-[11px] text-gray-500";
+            more.textContent = `+${dayEvents.length - 3} más`;
+            slot.appendChild(more);
+          }
+        } else {
+          const empty = document.createElement("div");
+          empty.className = "text-[11px] text-gray-400";
+          empty.textContent = " ";
+          slot.appendChild(empty);
+        }
+        cell.appendChild(slot);
+
+        monthViewEl.appendChild(cell);
       }
-      await loadEvents();
     }
 
-    function setupToolbar() {
-      const info = $("#viewInfo");
+    function renderWeek(){
+      weekHeaderEl.innerHTML = "";
+      weekViewEl.innerHTML = "";
+
+      const start = startOfWeek(currentDate);
+      const end = endOfWeek(currentDate);
+      const today = startOfDay(new Date());
+
+      // Etiqueta: rango semana
+      const sameMonth = start.getMonth() === end.getMonth();
+      const label =
+        (start.getDate() + "–" + end.getDate() + " " + (sameMonth ? monthNames[start.getMonth()] : (monthNames[start.getMonth()] + " / " + monthNames[end.getMonth()])) + " " + start.getFullYear());
+      labelEl.textContent = label;
+
+      for (let i=0;i<7;i++){
+        const day = addDays(start, i);
+        const key = ymdLocal(day);
+
+        // Header de día
+        const h = document.createElement("div");
+        h.className = "bg-white px-2 py-2 text-center";
+        const isToday = isSameDay(day, today);
+        h.innerHTML = '<div class="text-xs text-gray-500">'+ shortDays[i] +'</div>' +
+                      '<div class="'+ (isToday ? 'inline-flex items-center justify-center rounded bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white' : 'text-sm font-medium text-gray-700') +'">' + day.getDate() + '</div>';
+        weekHeaderEl.appendChild(h);
+
+        // Celda de día + eventos
+        const c = document.createElement("div");
+        c.className = "bg-white p-2 cell-base";
+        const dayEvents = eventsByDate.get(key) || [];
+        if (dayEvents.length) {
+          const list = document.createElement("div");
+          list.className = "space-y-1";
+          dayEvents.forEach(ev => {
+            const pill = document.createElement("div");
+            pill.className = "pill " + (ev.type === "goal" ? "pill-goal" : "pill-task") + (ev.completed ? " pill-completed" : "");
+            pill.textContent = (ev.completed ? "✓ " : "") + (ev.title || (ev.type === "goal" ? "Meta" : "Tarea"));
+            list.appendChild(pill);
+          });
+          c.appendChild(list);
+        }
+        weekViewEl.appendChild(c);
+      }
+    }
+
+    // Interacciones
+    function setView(v){
+      if (v === currentView) return;
+      currentView = v;
+      render();
+    }
+    async function prev(){
+      if (currentView === "month") {
+        currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth()-1, 1);
+      } else {
+        currentDate = addDays(currentDate, -7);
+      }
+      render();
+    }
+    async function next(){
+      if (currentView === "month") {
+        currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth()+1, 1);
+      } else {
+        currentDate = addDays(currentDate, +7);
+      }
+      render();
+    }
+    async function today(){
+      currentDate = new Date();
+      render();
+    }
+
+    function setupToolbar(){
       document.querySelectorAll(".view-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           const v = btn.getAttribute("data-view");
-          info.textContent = "Vista actual: " + (v === "month" ? "Mes" : v === "week" ? "Semana" : "Día");
+          setView(v);
         });
+      });
+      $("#btnPrev").addEventListener("click", prev);
+      $("#btnNext").addEventListener("click", next);
+      $("#btnToday").addEventListener("click", today);
+
+      $("#btnRefresh").addEventListener("click", async () => {
+        await loadEvents();
+        render();
+      });
+      $("#btnSync").addEventListener("click", async () => {
+        try { await window.apiFetch("/calendar/sync", { method: "POST" }); } catch (e) {}
+        await loadEvents();
+        render();
       });
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      $("#btnRefresh").addEventListener("click", loadEvents);
-      $("#btnSync").addEventListener("click", syncCalendar);
+    document.addEventListener("DOMContentLoaded", async () => {
       setupToolbar();
-      loadEvents();
+      await loadEvents();
+      render();
     });
   </script>
 </body>

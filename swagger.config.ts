@@ -22,6 +22,7 @@ const SwaggerOptions : SwaggerOptions = {
                     type: "http",
                     scheme: "bearer",
                     bearerFormat: "JWT",
+                    description: "Haz clic en Authorize y pega el JWT SIN el prefijo 'Bearer'. El cliente enviará el header Authorization: Bearer <token> automáticamente."
                 },
             },
         },

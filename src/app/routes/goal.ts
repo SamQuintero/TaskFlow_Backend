@@ -12,13 +12,8 @@ router.use(authMiddleware)
  *   get:
  *     tags: [Goals]
  *     summary: Listar metas 
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: OK
@@ -45,13 +40,9 @@ router.get("/", getGoals);
  *   get:
  *     tags: [Goals]
  *     summary: Obtener meta por ID 
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
  *       - in: path
  *         name: id
  *         required: true
@@ -80,15 +71,10 @@ router.get("/:id", getGoal);
  *   post:
  *     tags: [Goals]
  *     summary: Crear meta 
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
- *       required: false
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
@@ -122,13 +108,9 @@ router.post("/", validateBody(goalCreateSchema), createGoal);
  *   put:
  *     tags: [Goals]
  *     summary: Actualizar meta 
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
  *       - in: path
  *         name: id
  *         required: true
@@ -168,13 +150,9 @@ router.put("/:id", validateBody(goalUpdateSchema), updateGoal);
  *   delete:
  *     tags: [Goals]
  *     summary: Eliminar meta 
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
  *       - in: path
  *         name: id
  *         required: true

@@ -6,7 +6,8 @@ import { publishGoalCreated, publishGoalUpdated, publishGoalDeleted } from "../.
 // Obtener todas las metas
 export const getGoals = async (req: Request, res: Response) => {
   try {
-    const goals = await Goal.find();
+    const userId = (req as any).user?.id as string;
+    const goals = await Goal.find({ owner: userId });
     res.json({ data: goals });
   } catch (error) {
     res.status(500).json({ message: "Error fetching goals", error });
@@ -17,7 +18,8 @@ export const getGoals = async (req: Request, res: Response) => {
 export const getGoal = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const goal = await Goal.findById(id);
+    const userId = (req as any).user?.id as string;
+    const goal = await Goal.findOne({ _id: id, owner: userId });
     if (!goal) return res.status(404).json({ message: "Goal not found" });
     res.json({ data: goal });
   } catch (error) {
@@ -38,6 +40,7 @@ export const createGoal = async (req: Request, res: Response) => {
       description: body.description,
       dueDate: body.dueDate,
       completed: body.completed ?? false,
+      owner: (req as any).user?.id,
     });
 
     const savedGoal = await newGoal.save();
@@ -66,10 +69,14 @@ export const updateGoal = async (req: Request, res: Response) => {
     const { id } = req.params;
     const changes = req.body as IGoalUpdate;
 
-    const updatedGoal = await Goal.findByIdAndUpdate(id, changes, {
-      new: true, // devuelve el documento actualizado
-      runValidators: true, // valida los datos antes de actualizar
-    });
+    const updatedGoal = await Goal.findOneAndUpdate(
+      { _id: id, owner: (req as any).user?.id },
+      changes,
+      {
+        new: true, // devuelve el documento actualizado
+        runValidators: true, // valida los datos antes de actualizar
+      }
+    );
 
     if (!updatedGoal) return res.status(404).json({ message: "Goal not found" });
     try {

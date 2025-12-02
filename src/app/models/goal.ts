@@ -8,6 +8,7 @@ const goalSchema = new Schema<IGoal>(
     description: { type: String },
     dueDate: { type: String }, 
     completed: { type: Boolean, default: false },
+    owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   {
     timestamps: true, 

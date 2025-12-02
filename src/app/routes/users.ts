@@ -9,17 +9,12 @@ const router = Router();
 router.use(authMiddleware)
 /**
  * @openapi
- * /user:
+ * /users:
  *   get:
  *     tags: [Users]
  *     summary: Listar usuarios 
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: OK
@@ -43,17 +38,13 @@ router.use(authMiddleware)
 router.get("", getUsers);
 /**
  * @openapi
- * /user/{id}:
+ * /users/{id}:
  *   get:
  *     tags: [Users]
  *     summary: Obtener usuario por ID 
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token
- *         schema:
- *           type: string
  *       - in: path
  *         name: id
  *         required: true
@@ -73,17 +64,12 @@ router.get("", getUsers);
 router.get("/:id", getUser);
 /**
  * @openapi
- * /user:
+ * /users:
  *   post:
  *     tags: [Users]
  *     summary: Crear usuario 
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: false
  *       content:
@@ -113,17 +99,13 @@ router.get("/:id", getUser);
 router.post("", authorizeRoles('admin'), validateBody(userCreateSchema), createUser);
 /**
  * @openapi
- * /user/{id}:
+ * /users/{id}:
  *   put:
  *     tags: [Users]
  *     summary: Actualizar usuario
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
  *       - in: path
  *         name: id
  *         required: true
@@ -155,17 +137,13 @@ router.post("", authorizeRoles('admin'), validateBody(userCreateSchema), createU
 router.put("/:id", validateBody(userUpdateSchema), updateUser);
 /**
  * @openapi
- * /user/{id}:
+ * /users/{id}:
  *   delete:
  *     tags: [Users]
  *     summary: Eliminar usuario 
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
  *       - in: path
  *         name: id
  *         required: true

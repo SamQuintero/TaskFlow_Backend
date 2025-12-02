@@ -41,7 +41,7 @@ export const taskCreateSchema = z.object({
   title: z.string().min(1, "title is required"),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
   estimateHours: z.number().int().nonnegative().optional(),
-  dueDate: z.string().datetime().optional(),
+  dueDate: z.string().datetime(),
   completed: z.boolean().optional(),
 });
 
@@ -54,7 +54,7 @@ export const taskUpdateSchema = taskCreateSchema.partial().refine(
 export const goalCreateSchema = z.object({
   title: z.string().min(1, "title is required"),
   description: z.string().optional(),
-  dueDate: z.string().datetime().optional(),
+  dueDate: z.string().datetime(),
   completed: z.boolean().optional(),
 });
 
