@@ -27,7 +27,7 @@
           <form id="createGoalForm" class="grid gap-3 md:grid-cols-5">
             <input id="cg_title" type="text" placeholder="Título" class="h-10 w-full rounded border px-3 text-sm md:col-span-2" required />
             <input id="cg_desc" type="text" placeholder="Descripción" class="h-10 w-full rounded border px-3 text-sm md:col-span-2" />
-            <input id="cg_due" type="date" class="h-10 w-full rounded border px-3 text-sm" />
+            <input id="cg_due" type="date" class="h-10 w-full rounded border px-3 text-sm" required />
             <div class="md:col-span-5">
               <button class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Crear</button>
               <span id="createMsg" class="ml-2 text-sm"></span>
@@ -79,6 +79,7 @@
             <td class="px-3 py-2">
               <div class="flex items-center gap-2">
                 <button data-action="save" class="rounded border px-3 py-1 text-xs hover:bg-gray-50">Guardar</button>
+                <button data-action="toggle" class="rounded border px-3 py-1 text-xs hover:bg-gray-50">Finalizar</button>
                 <button data-action="delete" class="hidden rounded border px-3 py-1 text-xs text-red-700 hover:bg-red-50">Eliminar</button>
                 <span data-field="rowMsg" class="text-xs"></span>
               </div>
@@ -158,6 +159,7 @@
         const fCompleted = $('[data-field="completed"]', row);
         const rowMsg = $('[data-field="rowMsg"]', row);
         const btnSave = $('[data-action="save"]', row);
+        const btnToggle = $('[data-action="toggle"]', row);
         const btnDelete = $('[data-action="delete"]', row);
 
         fTitle.value = g.title || "";
@@ -166,6 +168,32 @@
         fCompleted.checked = !!g.completed;
 
         if (admin) btnDelete.classList.remove("hidden");
+
+        function updateToggleUI() {
+          btnToggle.textContent = fCompleted.checked ? "Reabrir" : "Finalizar";
+        }
+        updateToggleUI();
+
+        async function toggleComplete() {
+          rowMsg.textContent = "Actualizando...";
+          rowMsg.className = "text-xs text-gray-600";
+          try {
+            const newVal = !fCompleted.checked;
+            await window.apiFetch("/goals/" + (g._id || g.id), {
+              method: "PUT",
+              body: JSON.stringify({ completed: newVal })
+            });
+            fCompleted.checked = newVal;
+            updateToggleUI();
+            rowMsg.textContent = "Actualizada";
+            rowMsg.className = "text-xs text-green-600";
+            setTimeout(() => (rowMsg.textContent = ""), 1500);
+          } catch (err) {
+            rowMsg.textContent = "Error: " + (err.message || "no se pudo actualizar");
+            rowMsg.className = "text-xs text-red-700";
+          }
+        }
+        btnToggle.addEventListener("click", toggleComplete);
 
         async function save() {
           rowMsg.textContent = "Guardando...";
