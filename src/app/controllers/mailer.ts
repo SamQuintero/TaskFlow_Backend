@@ -23,3 +23,26 @@ const mailOptions = {
         console.log(error)
     }
 }
+
+export async function sendResetPassword(email: string, resetLink: string, name: string){
+
+    const mailOptions = {
+      to: email,
+      from: process.env.GMAIL_ADRESS,
+      subject: "Recuperación de contraseña",
+      template: "resetPassword",     
+      context: {
+        name: name,
+        resetLink
+      }
+    };
+    try {
+        const mailerInstance = await mailer;
+        await mailerInstance.sendMail(mailOptions);
+       
+        console.log(mailOptions);
+    } catch (error) {
+        console.log(error)
+    }
+    
+}
