@@ -14,13 +14,8 @@ router.use(authMiddleware)
  *   get:
  *     tags: [Tasks]
  *     summary: Listar tareas 
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: OK
@@ -48,13 +43,9 @@ router.get("/", getTasks);
  *   get:
  *     tags: [Tasks]
  *     summary: Obtener tarea por ID 
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
  *       - in: path
  *         name: id
  *         required: true
@@ -85,15 +76,10 @@ router.get("/:id", getTask);
  *   post:
  *     tags: [Tasks]
  *     summary: Crear tarea 
- *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
- *       required: false
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
@@ -133,13 +119,9 @@ router.post("/", validateBody(taskCreateSchema), createTask);
  *   put:
  *     tags: [Tasks]
  *     summary: Actualizar tarea 
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
  *       - in: path
  *         name: id
  *         required: true
@@ -181,13 +163,9 @@ router.put("/:id", validateBody(taskUpdateSchema), updateTask);
  *   delete:
  *     tags: [Tasks]
  *     summary: Eliminar tarea 
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: token
- *         required: true
- *         description: Token 
- *         schema:
- *           type: string
  *       - in: path
  *         name: id
  *         required: true
