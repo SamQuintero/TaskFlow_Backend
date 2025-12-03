@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { syncCalendar, getEvents } from "../controllers/calendar";
-import { authMiddleware } from "../middelwares/auth";
+import { syncCalendar, getEvents } from "../controllers/calendar.js";
+import { authMiddleware } from "../middelwares/auth.js";
 
 const router = Router();
 

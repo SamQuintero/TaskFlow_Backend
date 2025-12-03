@@ -1,5 +1,5 @@
 import { Schema, model, Document, Types } from 'mongoose';
-import { IFile } from '../interfaces/file'; // Crearemos esta interfaz ahora
+import { IFile } from '../interfaces/file.js'; // Crearemos esta interfaz ahora
 
 const fileSchema = new Schema<IFile>(
   {

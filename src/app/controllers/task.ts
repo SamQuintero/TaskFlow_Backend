@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import Task from "../models/task";
-import { ITaskCreate, ITaskUpdate } from "../interfaces/task";
-import { publishTaskCreated, publishTaskUpdated, publishTaskDeleted } from "../../realtime/publishers";
+import Task from "../models/task.js";
+import { ITaskCreate, ITaskUpdate } from "../interfaces/task.js";
+import { publishTaskCreated, publishTaskUpdated, publishTaskDeleted } from "../../realtime/publishers.js";
 
 
 export const getTasks = async (req: Request, res: Response) => {

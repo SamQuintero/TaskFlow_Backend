@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { authMiddleware } from "../middelwares/auth";
-import { upload } from "../middelwares/upload"; 
-import { uploadFile, getFile } from "../controllers/file"; 
+import { authMiddleware } from "../middelwares/auth.js";
+import { upload } from "../middelwares/upload.js"; 
+import { uploadFile, getFile } from "../controllers/file.js"; 
 
 const router = Router();
 

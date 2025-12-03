@@ -5,9 +5,9 @@ import hbs from "hbs";
 import passport from "passport";
 import swaggerJsDoc from "swagger-jsdoc";
 import { serve, setup } from "swagger-ui-express";
-import swaggerOptions from "../../swagger.config";
-import routes from "./routes";
-import { initGoogleAuth } from "./middelwares/googleAuth";
+import swaggerOptions from "../../swagger.config.js";
+import routes from "./routes/index.js";
+import { initGoogleAuth } from "./middelwares/googleAuth.js";
 
 export function createApp() {
   const app = express();

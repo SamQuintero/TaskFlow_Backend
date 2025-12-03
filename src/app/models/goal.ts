@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { IGoal } from "../interfaces/goal";
+import { IGoal } from "../interfaces/goal.js";
 
 
 const goalSchema = new Schema<IGoal>(

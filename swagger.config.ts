@@ -1,9 +1,8 @@
-
-import { SwaggerOptions }  from "swagger-ui-express"
+import type * as SUITypes from "swagger-ui-express";
 
 const port = process.env.PORT || 3001;
 
-const SwaggerOptions : SwaggerOptions = {
+const SwaggerOptions : SUITypes.SwaggerOptions = {
     swaggerDefinition: {
         openapi: "3.1.0",
         info: {

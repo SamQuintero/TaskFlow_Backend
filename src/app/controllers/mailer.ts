@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import mailer from '../models/mailer';
+import mailer from '../models/mailer.js';
 
 
 export async function sendVerificationEmail(email: string, token: string, name:string) {

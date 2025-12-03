@@ -1,8 +1,8 @@
 import { Router, json } from "express";
-import { getUsers, getUser, createUser, updateUser, deleteUser } from "../controllers/users";
-import { authMiddleware, authorizeRoles} from "../middelwares/auth";
-import { validateBody } from "../middelwares/validate";
-import { userCreateSchema, userUpdateSchema } from "../validation/schemas";
+import { getUsers, getUser, createUser, updateUser, deleteUser } from "../controllers/users.js";
+import { authMiddleware, authorizeRoles} from "../middelwares/auth.js";
+import { validateBody } from "../middelwares/validate.js";
+import { userCreateSchema, userUpdateSchema } from "../validation/schemas.js";
 
 const router = Router();
 

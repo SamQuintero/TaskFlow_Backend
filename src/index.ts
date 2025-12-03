@@ -1,21 +1,26 @@
 import express, { Request, Response } from "express";
 import dotenv from "dotenv"
-import { connectDB } from "./database";
+import { connectDB } from "./database/index.js";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 import hbs from "hbs";
 dotenv.config()
 import swaggerJsDoc from "swagger-jsdoc"
 import { setup, serve} from "swagger-ui-express"
-import swaggerOptions from "./../swagger.config";
+import * as SwaggerConfigModule from "./../swagger.config.js";
 import passport from "passport";
-import { initGoogleAuth } from "./app/middelwares/googleAuth";
+import { initGoogleAuth } from "./app/middelwares/googleAuth.js";
 
 
-import routes from "./app/routes";
+import routes from "./app/routes/index.js";
 import http from "http";
-import { initRealtime } from "./realtime";
+import { initRealtime } from "./realtime/index.js";
 
+const swaggerOptions = SwaggerConfigModule.default;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const port = process.env.PORT || 3000; 
 const dbUrl = process.env.MONGO_URL;

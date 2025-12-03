@@ -1,10 +1,10 @@
 import { Router } from "express";
-import authRoutes from "./auth";
-import userRoutes from "./users";
-import taskRoutes from "./task";
-import goalRoutes from "./goal";
-import calendarRoutes from "./calendar";
-import fileRoutes from "./files";
+import authRoutes from "./auth.js";
+import userRoutes from "./users.js";
+import taskRoutes from "./task.js";
+import goalRoutes from "./goal.js";
+import calendarRoutes from "./calendar.js";
+import fileRoutes from "./files.js";
 
 
 const router = Router();

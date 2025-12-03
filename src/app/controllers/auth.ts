@@ -1,10 +1,9 @@
 import { Request, Response } from "express";
-import { UserModel } from "../models/users";
+import { UserModel } from "../models/users.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { authorizeRoles } from "../middelwares/auth";
 import crypto from "crypto";
-import { sendVerificationEmail, sendResetPassword } from "./mailer";
+import { sendVerificationEmail, sendResetPassword } from "./mailer.js";
 
 
 export const signup = async (req: Request, res: Response) => {

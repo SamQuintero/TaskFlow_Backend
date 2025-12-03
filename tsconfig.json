@@ -1,11 +1,14 @@
 {
     "compilerOptions": {
         "outDir": "dist",
-        "target": "esnext",
-        "module": "nodenext",
-        "moduleResolution": "nodenext",
+        "target": "ES2022",
+        "module": "ES2022",
+        "moduleResolution": "Node",
+        "rootDir": ".",
         "resolveJsonModule": true,
         "strict": true,
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "isolatedModules": true
     }
 }

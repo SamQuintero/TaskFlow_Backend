@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { getGoals, getGoal, createGoal, updateGoal, deleteGoal } from "../controllers/goal";
-import { authMiddleware, authorizeRoles} from "../middelwares/auth";
-import { validateBody } from "../middelwares/validate";
-import { goalCreateSchema, goalUpdateSchema } from "../validation/schemas";
+import { getGoals, getGoal, createGoal, updateGoal, deleteGoal } from "../controllers/goal.js";
+import { authMiddleware, authorizeRoles} from "../middelwares/auth.js";
+import { validateBody } from "../middelwares/validate.js";
+import { goalCreateSchema, goalUpdateSchema } from "../validation/schemas.js";
 const router = Router();
 
 router.use(authMiddleware)

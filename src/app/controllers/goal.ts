@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import {Goal}  from "../models/goal"; 
-import { IGoalCreate, IGoalUpdate } from "../interfaces/goal";
-import { publishGoalCreated, publishGoalUpdated, publishGoalDeleted } from "../../realtime/publishers";
+import {Goal}  from "../models/goal.js"; 
+import { IGoalCreate, IGoalUpdate } from "../interfaces/goal.js";
+import { publishGoalCreated, publishGoalUpdated, publishGoalDeleted } from "../../realtime/publishers.js";
 
 // Obtener todas las metas
 export const getGoals = async (req: Request, res: Response) => {

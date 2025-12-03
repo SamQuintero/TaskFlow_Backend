@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import Task from "../models/task";
-import { Goal } from "../models/goal";
+import Task from "../models/task.js";
+import { Goal } from "../models/goal.js";
 
 export const syncCalendar = (req: Request, res: Response) => {
   res.json({ message: "Calendario sincronizado con éxito" });

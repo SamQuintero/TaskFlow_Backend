@@ -4,8 +4,8 @@ import type {
   ClientToServerEvents,
   ServerToClientEvents,
   SocketData,
-} from "./types";
-import { registerConnection, unregisterConnection } from "./presence";
+} from "./types.js";
+import { registerConnection, unregisterConnection } from "./presence.js";
 
 let io:
   | Server<ClientToServerEvents, ServerToClientEvents, any, SocketData>

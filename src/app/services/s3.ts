@@ -1,6 +1,7 @@
-import { S3 } from 'aws-sdk';
+import AWS from 'aws-sdk';
 import { File } from 'buffer';
 
+const { S3 } = AWS;
 const region = process.env.S3_REGION;
 const accessKeyId = process.env.S3_ACCESS_KEY;
 const secretAccessKey = process.env.S3_SECRET_KEY;

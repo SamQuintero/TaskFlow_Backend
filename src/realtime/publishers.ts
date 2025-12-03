@@ -1,9 +1,9 @@
-import { getIO } from "./index";
+import { getIO } from "./index.js";
 
 /**
  * Helper to emit to optional rooms and/or globally (for demo).
  */
-function emitToRooms(event: keyof import("./types").ServerToClientEvents, payload: any, rooms?: { userId?: string; projectId?: string }, emitGlobal?: boolean) {
+function emitToRooms(event: keyof import("./types.js").ServerToClientEvents, payload: any, rooms?: { userId?: string; projectId?: string }, emitGlobal?: boolean) {
   const io = getIO();
   if (rooms?.projectId) io.to(`project:${rooms.projectId}`).emit(event as any, payload);
   if (rooms?.userId) io.to(`user:${rooms.userId}`).emit(event as any, payload);

@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { getTasks, getTask, createTask, updateTask, deleteTask } from "../controllers/task";
-import { authMiddleware , authorizeRoles} from "../middelwares/auth";
-import { validateBody } from "../middelwares/validate";
-import { taskCreateSchema, taskUpdateSchema } from "../validation/schemas";
+import { getTasks, getTask, createTask, updateTask, deleteTask } from "../controllers/task.js";
+import { authMiddleware , authorizeRoles} from "../middelwares/auth.js";
+import { validateBody } from "../middelwares/validate.js";
+import { taskCreateSchema, taskUpdateSchema } from "../validation/schemas.js";
 
 
 const router = Router();

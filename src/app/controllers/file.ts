@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { uploadFileToS3, getFileStreamFromS3 } from "../services/s3";
-import { FileModel } from '../models/file';
-import { publishFileUploaded } from "../../realtime/publishers";
+import { uploadFileToS3, getFileStreamFromS3 } from "../services/s3.js";
+import { FileModel } from '../models/file.js';
+import { publishFileUploaded } from "../../realtime/publishers.js";
 
 // Controlador para subir un archivo a S3
 export const uploadFile = async (req: Request, res: Response) => {
