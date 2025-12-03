@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { login, signup, resetPassword, forgotPassword} from "../controllers/auth";
 import {UserModel} from "../models/users";
 import { validateBody } from "../middelwares/validate";
-import { loginSchema, signupSchema } from "../validation/schemas";
+import { loginSchema, signupSchema, forgotPasswordSchema, resetPasswordSchema } from "../validation/schemas";
 
 const router = Router();
 
@@ -109,7 +109,8 @@ router.get(
         { expiresIn: "7d" }
       );
 
-      res.redirect('/app/dashboard');
+        // Redirigir con el token como parámetro para que el cliente lo guarde
+      res.redirect(`/app/dashboard?token=${token}`);
     } catch (error) {
       console.error(error);
       res.redirect("/login?error=google-auth");
@@ -131,7 +132,15 @@ router.get("/verify", async (req, res) => {
   await user.save();
 
 
-  res.redirect('/app/dashboard');
+    // Generar JWT token
+  const jwtToken = jwt.sign(
+    { id: user._id, email: user.email, role: user.role },
+    process.env.JWT_SECRET!,
+    { expiresIn: "1d" }
+  );
+
+  // Redirigir con el token como parámetro para que el cliente lo guarde
+  res.redirect(`/app/dashboard?token=${jwtToken}`);
 });
 
 
@@ -143,9 +152,8 @@ router.get("/reset-password/", (req, res) => {
   res.render("resetPassword", { token: req.query.token });
 });
 
-router.post("/forgot-password", forgotPassword);
+router.post("/forgot-password", validateBody(forgotPasswordSchema), forgotPassword);
 
-
-router.post("/reset-password", resetPassword);
+router.post("/reset-password", validateBody(resetPasswordSchema), resetPassword);
 
 export default router;

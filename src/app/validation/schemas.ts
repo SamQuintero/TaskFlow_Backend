@@ -13,15 +13,24 @@ export const loginSchema = z.object({
 export const signupSchema = z.object({
   name: z.string().min(1, "name is required"),
   email,
-  password: z.string().min(6, "password must be at least 6 chars"),
+  password: z.string().min(4, "password must be at least 4 chars"),
   role: z.enum(["user", "admin"]).optional(),
+});
+
+export const forgotPasswordSchema = z.object({
+  email,
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "token is required"),
+  password: z.string().min(4, "password must be at least 4 chars"),
 });
 
 // Users
 export const userCreateSchema = z.object({
   name: z.string().min(1, "name is required"),
   email,
-  password: z.string().min(6, "password must be at least 6 chars"),
+  password: z.string().min(4, "password must be at least 4 chars"),
   role: z.enum(["user", "admin"]).optional(),
 });
 
@@ -29,7 +38,7 @@ export const userUpdateSchema = z
   .object({
     name: z.string().min(1).optional(),
     email: email.optional(),
-    password: z.string().min(6).optional(),
+    password: z.string().min(4).optional(),
     role: z.enum(["user", "admin"]).optional(),
   })
   .refine((v) => Object.keys(v).length > 0, {
