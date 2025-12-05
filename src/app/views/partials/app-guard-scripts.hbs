@@ -26,6 +26,16 @@
 
     // Guard: proteger rutas /app/*
     document.addEventListener("DOMContentLoaded", () => {
+      // Capturar token de URL si existe (OAuth callback)
+      const urlParams = new URLSearchParams(location.search);
+      const tokenFromUrl = urlParams.get('token');
+      if (tokenFromUrl) {
+        TaskFlowAuth.setToken(tokenFromUrl);
+        // Limpiar URL sin recargar
+        const cleanUrl = location.pathname;
+        history.replaceState(null, '', cleanUrl);
+      }
+
       const onApp = location.pathname.startsWith("/app/");
       const token = TaskFlowAuth.getToken();
 

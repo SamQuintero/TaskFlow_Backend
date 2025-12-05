@@ -16,8 +16,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <section class="bg-white rounded shadow p-4">
         <h2 class="text-lg font-semibold mb-3">Autenticación</h2>
-        <label class="block text-sm text-gray-600 mb-1">Token (Bearer)</label>
-        <input id="token" type="text" placeholder="Pega tu JWT aquí..." class="w-full border rounded px-3 py-2 text-sm mb-2"/>
+        <input id="token" type="hidden"/>
         <div class="flex gap-2">
           <button id="btnConnect" class="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded px-4 py-2">Conectar</button>
           <button id="btnDisconnect" class="bg-gray-500 hover:bg-gray-600 text-white text-sm rounded px-4 py-2">Desconectar</button>
@@ -44,6 +43,13 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
+    // Auto-llenar token al cargar la página
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('taskflow_token');
+      if (token) {
+        document.getElementById('token').value = token;
+      }
+    });
     let socket = null;
 
     const $ = (id) => document.getElementById(id);
@@ -65,9 +71,9 @@
     }
 
     function connectSocket() {
-      const token = $("token").value.trim();
+      const token = localStorage.getItem('taskflow_token');
       if (!token) {
-        alert("Pega tu token (JWT) para conectar");
+        alert("No hay token de autenticación. Inicia sesión primero.");
         return;
       }
       if (socket && socket.connected) {
