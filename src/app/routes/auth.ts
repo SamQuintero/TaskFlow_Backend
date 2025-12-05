@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import { login, signup, resetPassword, forgotPassword} from "../controllers/auth.js";
 import {UserModel} from "../models/users.js";
 import { validateBody } from "../middelwares/validate.js";
-import { loginSchema, signupSchema } from "../validation/schemas.js";
+import { loginSchema, signupSchema, forgotPasswordSchema, resetPasswordSchema } from "../validation/schemas.js";
 
 
 const router = Router();
