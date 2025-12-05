@@ -1,8 +1,9 @@
 import { Router, json } from "express";
-import { getUsers, getUser, createUser, updateUser, deleteUser } from "../controllers/users.js";
+import { getUsers, getUser, createUser, updateUser, deleteUser, uploadAvatar } from "../controllers/users.js";
 import { authMiddleware, authorizeRoles} from "../middelwares/auth.js";
 import { validateBody } from "../middelwares/validate.js";
 import { userCreateSchema, userUpdateSchema } from "../validation/schemas.js";
+import { upload } from "../middelwares/upload.js";
 
 const router = Router();
 
@@ -159,5 +160,34 @@ router.put("/:id", validateBody(userUpdateSchema), updateUser);
  *               message: "Usuario eliminado correctamente"
  */
 router.delete("/:id",authorizeRoles('admin'), deleteUser);
+
+/**
+ * @openapi
+ * /users/{id}/avatar:
+ *   post:
+ *     tags: [Users]
+ *     summary: Subir foto de perfil
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Avatar actualizado
+ */
+router.post("/:id/avatar", upload.single('file'), uploadAvatar);
 
 export default router;

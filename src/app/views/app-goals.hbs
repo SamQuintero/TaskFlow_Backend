@@ -44,13 +44,14 @@
                   <th class="px-3 py-2 font-medium">Título</th>
                   <th class="px-3 py-2 font-medium">Descripción</th>
                   <th class="px-3 py-2 font-medium">Vence</th>
+                  <th class="px-3 py-2 font-medium">Tareas</th>
                   <th class="px-3 py-2 font-medium">Completada</th>
                   <th class="px-3 py-2 font-medium"></th>
                 </tr>
               </thead>
               <tbody id="goalsTbody">
                 <tr>
-                  <td colspan="5" class="px-3 py-6 text-center text-gray-500">Cargando...</td>
+                  <td colspan="6" class="px-3 py-6 text-center text-gray-500">Cargando...</td>
                 </tr>
               </tbody>
             </table>
@@ -69,6 +70,12 @@
             </td>
             <td class="px-3 py-2">
               <input data-field="dueDate" type="date" class="h-8 rounded border px-2 text-sm" />
+            </td>
+            <td class="px-3 py-2">
+              <div class="flex items-center gap-2">
+                <span data-field="taskCount" class="text-xs text-gray-600">0 tareas</span>
+                <button data-action="manageTasks" class="text-xs text-blue-600 hover:underline">Gestionar</button>
+              </div>
             </td>
             <td class="px-3 py-2">
               <label class="inline-flex items-center gap-2 text-xs">
@@ -132,7 +139,7 @@
         const goals = resp?.data || [];
         renderGoals(goals);
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="5" class="px-3 py-6 text-center text-red-600">Error cargando metas: ' + (err.message || 'Error') + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-red-600">Error cargando metas: ' + (err.message || 'Error') + '</td></tr>';
       }
     }
 
@@ -143,7 +150,7 @@
       const admin = isAdminRole();
 
       if (!goals || !goals.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="px-3 py-6 text-center text-gray-500">Aún no hay metas</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-gray-500">Aún no hay metas</td></tr>';
         $("#listMeta").textContent = "0 resultado(s)";
         return;
       }
@@ -157,6 +164,8 @@
         const fDesc = $('[data-field="description"]', row);
         const fDue = $('[data-field="dueDate"]', row);
         const fCompleted = $('[data-field="completed"]', row);
+        const taskCount = $('[data-field="taskCount"]', row);
+        const btnManageTasks = $('[data-action="manageTasks"]', row);
         const rowMsg = $('[data-field="rowMsg"]', row);
         const btnSave = $('[data-action="save"]', row);
         const btnToggle = $('[data-action="toggle"]', row);
@@ -166,6 +175,14 @@
         fDesc.value = g.description || "";
         fDue.value = fromISOToDateInput(g.dueDate);
         fCompleted.checked = !!g.completed;
+        
+        // Cargar contador de tareas
+        loadTaskCount(g._id || g.id, taskCount);
+        
+        // Gestionar tareas
+        btnManageTasks.addEventListener("click", () => {
+          openTaskModal(g._id || g.id, g.title, taskCount);
+        });
 
         if (admin) btnDelete.classList.remove("hidden");
 
@@ -268,6 +285,142 @@
           msg.className = "ml-2 text-sm text-red-600";
         }
       });
+    }
+
+    async function loadTaskCount(goalId, countElement) {
+      try {
+        const tasks = await window.apiFetch(`/tasks?goal=${goalId}`, { method: "GET" });
+        const count = tasks?.data?.length || 0;
+        countElement.textContent = `${count} tarea${count !== 1 ? 's' : ''}`;
+      } catch {
+        countElement.textContent = "0 tareas";
+      }
+    }
+    
+    function openTaskModal(goalId, goalTitle, countElement) {
+      // Crear modal simple
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+      modal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Tareas de: ${goalTitle}</h3>
+            <button id="closeModal" class="text-gray-500 hover:text-gray-700">×</button>
+          </div>
+          <div class="mb-4">
+            <select id="availableTasks" class="w-full border rounded px-3 py-2 text-sm mb-2">
+              <option value="">Seleccionar tarea existente...</option>
+            </select>
+            <button id="assignTask" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">Asignar a Meta</button>
+          </div>
+          <div id="tasksList" class="space-y-2"></div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // Eventos del modal
+      modal.querySelector('#closeModal').onclick = () => {
+        document.body.removeChild(modal);
+      };
+      
+      modal.onclick = (e) => {
+        if (e.target === modal) document.body.removeChild(modal);
+      };
+      
+      // Cargar tareas existentes y disponibles
+      loadGoalTasks(goalId);
+      loadAvailableTasks(goalId);
+      
+      // Asignar tarea existente
+      modal.querySelector('#assignTask').onclick = async () => {
+        const taskId = modal.querySelector('#availableTasks').value;
+        if (!taskId) return;
+        
+        try {
+          await window.apiFetch(`/tasks/${taskId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ goal: goalId })
+          });
+          modal.querySelector('#availableTasks').value = '';
+          loadGoalTasks(goalId);
+          loadAvailableTasks(goalId);
+          loadTaskCount(goalId, countElement);
+        } catch (err) {
+          alert('Error al asignar tarea: ' + err.message);
+        }
+      };
+      
+      async function loadGoalTasks(goalId) {
+        const tasksList = modal.querySelector('#tasksList');
+        try {
+          const tasks = await window.apiFetch(`/tasks?goal=${goalId}`, { method: "GET" });
+          const taskData = tasks?.data || [];
+          
+          tasksList.innerHTML = taskData.map(task => `
+            <div class="flex items-center justify-between p-2 border rounded">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                       onchange="toggleTask('${task._id}', this.checked, '${goalId}')">
+                <span class="${task.completed ? 'line-through text-gray-500' : ''}">${task.title}</span>
+              </div>
+              <button onclick="unassignTask('${task._id}', '${goalId}')" 
+                      class="text-orange-600 hover:text-orange-800 text-sm">Desasignar</button>
+            </div>
+          `).join('');
+        } catch {
+          tasksList.innerHTML = '<p class="text-gray-500 text-sm">Error cargando tareas</p>';
+        }
+      }
+      
+      // Funciones globales para los eventos inline
+      window.toggleTask = async (taskId, completed, goalId) => {
+        try {
+          await window.apiFetch(`/tasks/${taskId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ completed })
+          });
+          loadGoalTasks(goalId);
+        } catch (err) {
+          alert('Error al actualizar tarea');
+        }
+      };
+      
+      window.unassignTask = async (taskId, goalId) => {
+        if (!confirm('¿Desasignar esta tarea de la meta?')) return;
+        try {
+          await window.apiFetch(`/tasks/${taskId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ goal: null })
+          });
+          loadGoalTasks(goalId);
+          loadAvailableTasks(goalId);
+          loadTaskCount(goalId, countElement);
+        } catch (err) {
+          alert('Error al desasignar tarea');
+        }
+      };
+      
+      async function loadAvailableTasks(goalId) {
+        const select = modal.querySelector('#availableTasks');
+        try {
+          // Cargar tareas sin meta asignada
+          const tasks = await window.apiFetch('/tasks', { method: "GET" });
+          const availableTasks = tasks?.data?.filter(task => !task.goal) || [];
+          
+          // Limpiar opciones existentes excepto la primera
+          select.innerHTML = '<option value="">Seleccionar tarea existente...</option>';
+          
+          availableTasks.forEach(task => {
+            const option = document.createElement('option');
+            option.value = task._id;
+            option.textContent = task.title;
+            select.appendChild(option);
+          });
+        } catch {
+          select.innerHTML = '<option value="">Error cargando tareas</option>';
+        }
+      }
     }
 
     document.addEventListener("DOMContentLoaded", () => {

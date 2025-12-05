@@ -33,6 +33,18 @@ export function uploadFileToS3(file: Express.Multer.File) {
     return s3.upload(uploadParams).promise();
   }
 
+// Función para subir buffer a S3 con key personalizada
+export function uploadToS3(buffer: Buffer, key: string, contentType: string) {
+    const uploadParams = {
+      Bucket: bucketName,
+      Body: buffer,
+      Key: key,
+      ContentType: contentType
+    };
+  
+    return s3.upload(uploadParams).promise();
+}
+
 // Función para descargar un archivo de S3 
 export function getFileStreamFromS3(fileKey: string) {
     const downloadParams = {

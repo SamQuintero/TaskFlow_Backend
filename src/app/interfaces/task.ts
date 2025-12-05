@@ -12,6 +12,7 @@ export interface ITask extends Document{
   createdAt: string; // ISO 8601 string
   updatedAt: string; // ISO 8601 string
   owner: any; // ObjectId del creador (ref User)
+  goal?: any; // ObjectId de la meta (ref Goal)
 }
 
 export interface ITaskCreate extends Document{
@@ -20,6 +21,7 @@ export interface ITaskCreate extends Document{
   estimateHours?: number;
   dueDate?: string;
   completed?: boolean;
+  goal?: any; // ObjectId de la meta
 }
 
 export type ITaskUpdate = Partial<ITaskCreate>;

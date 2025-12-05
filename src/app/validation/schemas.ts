@@ -52,9 +52,17 @@ export const taskCreateSchema = z.object({
   estimateHours: z.number().int().nonnegative().optional(),
   dueDate: z.string().datetime(),
   completed: z.boolean().optional(),
+  goal: z.string().nullable().optional(),
 });
 
-export const taskUpdateSchema = taskCreateSchema.partial().refine(
+export const taskUpdateSchema = z.object({
+  title: z.string().min(1).optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
+  estimateHours: z.number().int().nonnegative().optional(),
+  dueDate: z.string().datetime().optional(),
+  completed: z.boolean().optional(),
+  goal: z.string().nullable().optional(),
+}).refine(
   (v) => Object.keys(v).length > 0,
   { message: "At least one field must be provided" }
 );

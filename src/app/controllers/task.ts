@@ -7,7 +7,14 @@ import { publishTaskCreated, publishTaskUpdated, publishTaskDeleted } from "../.
 export const getTasks = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id as string;
-    const tasks = await Task.find({ owner: userId });
+    const { goal } = req.query;
+    
+    const filter: any = { owner: userId };
+    if (goal) {
+      filter.goal = goal;
+    }
+    
+    const tasks = await Task.find(filter);
     res.json({ data: tasks });
   } catch (error) {
     res.status(500).json({ message: "Error fetching tasks", error });
@@ -42,6 +49,7 @@ export const createTask = async (req: Request, res: Response) => {
       dueDate: body.dueDate,
       completed: body.completed ?? false,
       owner: (req as any).user?.id,
+      goal: body.goal,
     });
 
     const savedTask = await newTask.save();

@@ -58,6 +58,8 @@ export const uploadFile = async (req: Request, res: Response) => {
   
   export const getFile = async (req: Request, res: Response) => {
     const key = req.params.key;
+    console.log('Getting file:', key);
+    console.log('User from token:', (req as any).user);
     
     const userId = (req as any).user.id;
     const userRole = (req as any).user.role;
@@ -70,8 +72,10 @@ export const uploadFile = async (req: Request, res: Response) => {
         return res.status(404).json({ message: "Archivo no encontrado" });
       }
   
-      // El usuario es el dueño? O el usuario es un 'admin'?
-      if (dbFile.owner.toString() !== userId && userRole !== 'admin') {
+      // Para avatares, permitir acceso a todos los usuarios autenticados
+      // Para otros archivos, solo el dueño o admin
+      const isAvatar = dbFile.s3Key.startsWith('avatars/');
+      if (!isAvatar && dbFile.owner.toString() !== userId && userRole !== 'admin') {
         return res.status(403).json({ message: "No tienes permiso para ver este archivo" });
       }
   

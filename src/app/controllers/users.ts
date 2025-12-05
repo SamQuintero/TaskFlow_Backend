@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import {UserModel} from "../models/users.js";
+import { uploadToS3 } from "../services/s3.js";
+import { FileModel } from "../models/file.js";
 
 
 
@@ -67,5 +69,58 @@ export async function deleteUser(req: Request, res: Response) {
     res.status(200).json({ message: "Usuario eliminado correctamente" });
   } catch (error) {
     res.status(500).json({ message: "Error al eliminar usuario", error });
+  }
+}
+
+export async function uploadAvatar(req: Request, res: Response) {
+  try {
+    const userId = req.params.id;
+    console.log('Uploading avatar for user:', userId);
+    const user = await UserModel.findById(userId);
+    
+    if (!user) {
+      console.log('User not found:', userId);
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    if (!req.file) {
+      console.log('No file received');
+      return res.status(400).json({ message: "No se envió ningún archivo" });
+    }
+    
+    console.log('File received:', req.file.originalname, req.file.size, 'bytes');
+
+    // Subir a S3
+    const s3Key = `avatars/${userId}/${Date.now()}-${req.file.originalname}`;
+    const s3Result = await uploadToS3(req.file.buffer, s3Key, req.file.mimetype);
+
+    // Guardar en BD
+    const fileDoc = await FileModel.create({
+      fileName: req.file.originalname,
+      s3Key,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+      owner: userId,
+    });
+
+    // Actualizar avatar del usuario
+    user.avatar = s3Key;
+    await user.save();
+    
+    console.log('Avatar updated successfully:', s3Key);
+
+    res.status(200).json({
+      message: "Avatar actualizado correctamente",
+      avatar: s3Key,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    console.error("Error uploading avatar:", error);
+    res.status(500).json({ message: "Error al subir avatar", error });
   }
 }

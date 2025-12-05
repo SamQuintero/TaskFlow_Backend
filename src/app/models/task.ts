@@ -11,6 +11,7 @@ const taskSchema = new Schema<ITask>(
     dueDate: { type: String, required: false }, 
     completed: { type: Boolean, default: false },
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    goal: { type: Schema.Types.ObjectId, ref: "Goal", required: false },
   },
   {
     timestamps: true, 

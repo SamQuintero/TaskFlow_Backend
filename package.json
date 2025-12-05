@@ -7,13 +7,16 @@
   "scripts": {
     "build": "rimraf dist && npx gulp build",
     "start": "node . ",
-    "dev": "nodemon --watch src --watch src/app/views --ext ts,json,hbs src/index.ts",
+    "dev": "nodemon --watch src --watch src/app/views --ext ts,json,hbs --exec \"node --loader ts-node/esm src/index.ts\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:ci": "jest --runInBand"
   },
   "author": "",
   "license": "ISC",
+  "ts-node": {
+    "esm": true
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.933.0",
     "@types/gulp": "^4.0.18",

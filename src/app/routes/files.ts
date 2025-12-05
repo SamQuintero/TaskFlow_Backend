@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { authMiddleware } from "../middelwares/auth.js";
 import { upload } from "../middelwares/upload.js"; 
-import { uploadFile, getFile } from "../controllers/file.js"; 
+import { uploadFile, getFile } from "../controllers/file.js";
+import { getFileStreamFromS3 } from "../services/s3.js"; 
 
 const router = Router();
 
@@ -9,6 +10,20 @@ router.get("/view", (req, res) => {
     res.render("upload"); // Buscará un archivo 'upload.hbs'
   });
 
+// Ruta pública para avatares
+router.get("/avatar/:userId/:filename", async (req, res) => {
+  const { userId, filename } = req.params;
+  const key = `avatars/${userId}/${filename}`;
+  console.log('Getting avatar:', key);
+  
+  try {
+    const readStream = getFileStreamFromS3(key);
+    readStream.pipe(res);
+  } catch (error) {
+    console.error("Error al obtener avatar:", error);
+    res.status(404).json({ message: "Avatar no encontrado" });
+  }
+});
 
 router.use(authMiddleware)
 

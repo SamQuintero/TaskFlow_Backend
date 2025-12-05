@@ -40,6 +40,7 @@
             <table class="w-full text-sm">
               <thead class="bg-gray-50 text-left">
                 <tr>
+                  <th class="px-3 py-2 font-medium">Avatar</th>
                   <th class="px-3 py-2 font-medium">Nombre</th>
                   <th class="px-3 py-2 font-medium">Correo</th>
                   <th class="px-3 py-2 font-medium">Rol</th>
@@ -59,6 +60,14 @@
 
         <template id="userRowTpl">
           <tr class="border-t">
+            <td class="px-3 py-2">
+              <div class="flex items-center gap-2">
+                <img data-field="avatar" class="h-8 w-8 rounded-full object-cover" src="" alt="Avatar" style="display: none;" />
+                <div data-field="no-avatar" class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium text-gray-600"></div>
+                <input data-field="avatar-input" type="file" accept="image/*" class="hidden" />
+                <button data-action="upload-avatar" class="text-xs text-blue-600 hover:underline">Cambiar</button>
+              </div>
+            </td>
             <td class="px-3 py-2"><span data-field="name"></span></td>
             <td class="px-3 py-2"><span data-field="email"></span></td>
             <td class="px-3 py-2">
@@ -97,13 +106,13 @@
 
     async function loadUsers() {
       const tbody = $("#usersTbody");
-      tbody.innerHTML = '<tr><td colspan="4" class="px-3 py-6 text-center text-gray-500">Cargando...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="px-3 py-6 text-center text-gray-500">Cargando...</td></tr>';
       try {
         // getUsers devuelve un array directamente (no { data: ... })
         const users = await window.apiFetch("/users", { method: "GET" });
         renderUsers(users);
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="4" class="px-3 py-6 text-center text-red-600">Error cargando usuarios: ' + (err.message || 'Error') + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="px-3 py-6 text-center text-red-600">Error cargando usuarios: ' + (err.message || 'Error') + '</td></tr>';
       }
     }
 
@@ -114,7 +123,7 @@
       const admin = isAdminRole();
 
       if (!users || !users.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="px-3 py-6 text-center text-gray-500">Aún no hay usuarios</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="px-3 py-6 text-center text-gray-500">Aún no hay usuarios</td></tr>';
         $("#listMeta").textContent = "0 resultado(s)";
         return;
       }
@@ -123,6 +132,50 @@
 
       users.forEach(u => {
         const row = tpl.content.firstElementChild.cloneNode(true);
+        
+        // Avatar
+        const avatarImg = $('[data-field="avatar"]', row);
+        const noAvatar = $('[data-field="no-avatar"]', row);
+        const avatarInput = $('[data-field="avatar-input"]', row);
+        const btnUploadAvatar = $('[data-action="upload-avatar"]', row);
+        
+
+        if (u.avatar) {
+          // Si es URL de Google (empieza con http), usar directamente
+          if (u.avatar.startsWith('http')) {
+
+            avatarImg.src = u.avatar;
+            avatarImg.style.display = 'block';
+            noAvatar.style.display = 'none';
+            
+            // Manejar error de carga de imagen
+            avatarImg.onerror = function() {
+              avatarImg.style.display = 'none';
+              noAvatar.style.display = 'flex';
+              noAvatar.textContent = (u.name || 'U').charAt(0).toUpperCase();
+            };
+          } else {
+            // Si es S3 key, extraer userId y filename para la ruta pública
+            const parts = u.avatar.split('/');
+            if (parts.length >= 3 && parts[0] === 'avatars') {
+              const userId = parts[1];
+              const filename = parts.slice(2).join('/');
+              avatarImg.src = `/files/avatar/${userId}/${filename}`;
+              avatarImg.style.display = 'block';
+              noAvatar.style.display = 'none';
+            } else {
+              // Si no es formato esperado, mostrar inicial
+              noAvatar.textContent = (u.name || 'U').charAt(0).toUpperCase();
+              avatarImg.style.display = 'none';
+              noAvatar.style.display = 'flex';
+            }
+          }
+        } else {
+          noAvatar.textContent = (u.name || 'U').charAt(0).toUpperCase();
+          avatarImg.style.display = 'none';
+          noAvatar.style.display = 'flex';
+        }
+        
         $('[data-field="name"]', row).textContent = u.name || "-";
         $('[data-field="email"]', row).textContent = u.email || "-";
         const roleSel = $('[data-field="role"]', row);
@@ -159,6 +212,57 @@
             row.remove();
           } catch (err) {
             rowMsg.textContent = "Error: " + (err.message || "no se pudo eliminar");
+          }
+        });
+        
+        // Upload avatar
+        btnUploadAvatar.addEventListener("click", () => {
+          avatarInput.click();
+        });
+        
+        avatarInput.addEventListener("change", async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          
+          rowMsg.textContent = "Subiendo avatar...";
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await fetch(`/users/${u._id}/avatar`, {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Bearer ' + window.TaskFlowAuth.getToken()
+              },
+              body: formData
+            });
+            
+            if (!response.ok) {
+              const errorText = await response.text();
+
+              throw new Error(`Error ${response.status}: ${errorText}`);
+            }
+            
+            const result = await response.json();
+            
+            // Actualizar UI
+            if (result.avatar.startsWith('http')) {
+              avatarImg.src = result.avatar;
+            } else {
+              const parts = result.avatar.split('/');
+              if (parts.length >= 3 && parts[0] === 'avatars') {
+                const userId = parts[1];
+                const filename = parts.slice(2).join('/');
+                avatarImg.src = `/files/avatar/${userId}/${filename}`;
+              }
+            }
+            avatarImg.style.display = 'block';
+            noAvatar.style.display = 'none';
+            
+            rowMsg.textContent = "Avatar actualizado";
+            setTimeout(() => rowMsg.textContent = "", 1500);
+          } catch (err) {
+            rowMsg.textContent = "Error: " + (err.message || "no se pudo subir");
           }
         });
 
